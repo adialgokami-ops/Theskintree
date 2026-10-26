@@ -8,26 +8,6 @@
    - simple parallax for .hero__bg
 */
 (() => {
-  // Navbar scroll
-  const navbar = document.querySelector('.navbar');
-  if (navbar) {
-    const heroEl = document.querySelector('.section-hero');
-    const heroThreshold = heroEl ? (heroEl.offsetHeight - 80) : 160;
-    // apply hero class initially when on the hero section
-    if (heroEl) navbar.classList.add('navbar--hero');
-    const onScroll = () => {
-      const scrolled = window.scrollY > 40;
-      navbar.classList.toggle('is-scrolled', scrolled);
-      if (heroEl) {
-        // remove hero styling once the user scrolls past the hero
-        if (window.scrollY > heroThreshold) navbar.classList.remove('navbar--hero');
-        else navbar.classList.add('navbar--hero');
-      }
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  }
-
   // Hamburger
   const btn = document.getElementById('nav-hamburger');
   const menu = document.getElementById('nav-mobile-menu');

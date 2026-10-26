@@ -16,10 +16,11 @@ function Router(){
 }
 
 export default function App() {
+  const isHome = typeof window !== 'undefined' ? window.location.pathname === '/' : true
   return (
     <div>
       <Header />
-      <main>
+      <main className={isHome ? '' : 'main-subpage'}>
         <Router />
       </main>
       <StickyCTA />
