@@ -172,7 +172,7 @@ export default function ManageBooking() {
               boxShadow: 'var(--shadow-md)'
             }}>
               {/* Header card */}
-              <div style={{ borderBottom: '1px solid var(--c-border-light)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ borderBottom: '1px solid var(--c-border-light)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--c-terracotta)', fontWeight: 600 }}>
                     Appointment Status
@@ -195,7 +195,7 @@ export default function ManageBooking() {
               </div>
 
               {/* Details grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
                 <div>
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--c-text-muted)', fontWeight: 600, marginBottom: 4 }}>
                     Dermatologist
@@ -299,7 +299,7 @@ export default function ManageBooking() {
                           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--c-text-muted)', marginBottom: 6 }}>
                             Available Slots on {rescheduleDate}
                           </label>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '1.5rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(85px, 1fr))', gap: '8px', marginBottom: '1.5rem' }}>
                             {selectedDayObj.slots.map(s => (
                               <button
                                 key={s.time}
@@ -326,7 +326,7 @@ export default function ManageBooking() {
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                         <button
                           type="button"
                           className="btn btn--primary"
@@ -379,7 +379,7 @@ export default function ManageBooking() {
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'flex-end' }}>
                       <button
                         type="button"
                         className="btn btn--outline"

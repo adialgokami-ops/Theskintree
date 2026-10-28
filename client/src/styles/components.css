@@ -460,6 +460,35 @@
   content: ''; flex: 1; height: 1px; background: var(--c-border-light);
 }
 
+/* Doctor Facts */
+.doctor-facts {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.doctor-facts li {
+  position: relative;
+  padding-left: 1.5rem;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-relaxed);
+  color: var(--c-text-secondary);
+}
+.doctor-facts li::before {
+  content: '•';
+  position: absolute;
+  left: 0.25rem;
+  top: 0;
+  color: var(--c-terracotta);
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+.doctor-facts li strong {
+  color: var(--c-text-primary);
+  font-weight: var(--fw-semibold);
+}
+
 @media (max-width: 768px) {
   .tabs {
     overflow-x: auto;
@@ -498,6 +527,15 @@
   }
   .modal-backdrop.is-open .modal-content {
     transform: translateY(0);
+  }
+  .btn {
+    white-space: normal;
+    text-align: center;
+    max-width: 100%;
+  }
+  .slot-picker-header {
+    flex-wrap: wrap;
+    gap: 6px;
   }
 }
 @media (max-width: 480px) {
@@ -833,6 +871,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  flex-wrap: wrap;
   margin-bottom: 8px;
 }
 

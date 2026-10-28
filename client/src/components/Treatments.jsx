@@ -124,7 +124,7 @@ export default function Treatments({ preview = false }) {
                 <button className="modal-close" onClick={() => setModal(null)} aria-label="Close dialog">✕</button>
               </div>
               <div id="modal-body" className="modal-body">
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem', marginBottom: '1.25rem', padding: '1rem', background: 'var(--c-cream)', borderRadius: 12}}>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '.75rem', marginBottom: '1.25rem', padding: '1rem', background: 'var(--c-cream)', borderRadius: 12}}>
                   <div>
                     <div style={{fontSize: '10px', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-text-light)', marginBottom: 3}}>Duration</div>
                     <div style={{fontSize: '.875rem', fontWeight: 500, color: 'var(--c-text-primary)'}}>{TREATMENTS[modal].duration}</div>

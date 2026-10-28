@@ -216,15 +216,17 @@
   z-index: calc(var(--z-nav) - 1);
   background: var(--c-off-white);
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  gap: var(--space-8);
-  padding: var(--space-24) var(--gutter);
+  gap: var(--space-6);
+  padding: clamp(5rem, 12vh, 7rem) var(--gutter) 2rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .nav-mobile-menu.is-open { display: flex; }
 .nav-mobile-menu .nav-link {
   font-family: var(--font-display);
-  font-size: var(--fs-3xl);
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
   color: var(--c-text-primary);
   font-weight: var(--fw-medium);
 }
@@ -364,7 +366,8 @@
     padding-right: 0;
   }
   .split-layout > div:last-child {
-    justify-self: center;
+    justify-self: stretch;
+    width: 100%;
   }
   .hero-card {
     max-width: 520px;
@@ -473,6 +476,7 @@
 /* ── RESPONSIVE ─────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
   .footer__inner { grid-template-columns: 1fr 1fr; }
 }
 
@@ -522,7 +526,21 @@
 .stat-footnote{ margin-top: var(--space-6); text-align:center; color: var(--c-text-muted); font-size: var(--fs-sm) }
 
 @media (max-width: 1024px){ .stats-grid{ grid-template-columns: repeat(2,1fr) } }
-@media (max-width: 640px){ .stats-grid{ grid-template-columns: 1fr } .stat-item{ padding: var(--space-4) } .stat-number{ font-size: 1.75rem } }
+@media (max-width: 640px){
+  .hero-cta { width: 100%; max-width: 340px; text-align: center; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .stat-item { padding: 1rem 0.5rem; }
+  .stat-number { font-size: 1.75rem; }
+}
+
+@media (max-width: 480px) {
+  .nav-logo { gap: 0.75rem; }
+  .nav-logo__icon { width: 60px; height: 60px; }
+  .navbar.is-scrolled .nav-logo__icon,
+  .navbar--hero.is-scrolled .nav-logo__icon { width: 48px; height: 48px; }
+  .nav-logo__name { font-size: 1.25rem; }
+  .nav-logo__sub { font-size: 0.7rem; }
+}
 
 /* Sticky CTA */
 .sticky-cta{

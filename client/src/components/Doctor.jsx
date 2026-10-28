@@ -24,7 +24,7 @@ export default function Doctor({ preview = false }) {
               </ul>
             )}
 
-            <div style={{marginTop:'2rem'}}>
+            <div style={{marginTop:'2rem', display: 'flex', flexWrap: 'wrap', gap: '12px'}}>
               {preview ? (
                 <Link to="/about" className="btn btn--outline">View all about Dr. Aishwarya & Our Philosophy →</Link>
               ) : (
@@ -33,7 +33,7 @@ export default function Doctor({ preview = false }) {
             </div>
           </div>
           <div>
-            <img src="/assets/images/doctor.png" alt="Dr. Aishwarya, Lead Dermatologist at The Skin Tree" style={{borderRadius:'var(--radius-xl)',boxShadow:'var(--shadow-lg)',width:'100%',display:'block'}} />
+            <img src="/assets/images/doctor.png" alt="Dr. Aishwarya, Lead Dermatologist at The Skin Tree" style={{borderRadius:'var(--radius-xl)',boxShadow:'var(--shadow-lg)',width:'100%',maxWidth:'480px',margin:'0 auto',display:'block'}} />
           </div>
         </div>
       </div>

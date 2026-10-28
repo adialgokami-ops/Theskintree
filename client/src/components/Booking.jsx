@@ -379,7 +379,7 @@ export default function Booking({ hideHeader = false }) {
             ) : null}
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.7)', padding: '14px 18px', borderRadius: '12px', maxWidth: '480px', margin: '0 auto', fontSize: '0.85rem', color: 'var(--c-text-secondary)' }}>
+          <div style={{ background: 'rgba(255,255,255,0.7)', padding: '14px 18px', borderRadius: '12px', maxWidth: '480px', width: '100%', margin: '0 auto', fontSize: '0.85rem', color: 'var(--c-text-secondary)', wordBreak: 'break-word' }}>
             Need to reschedule or cancel? You can manage your booking anytime at:{' '}
             <Link to={`/manage/${bookingSuccess.manageToken}`} style={{ color: 'var(--c-terracotta)', fontWeight: 600, wordBreak: 'break-all' }}>
               /manage/{bookingSuccess.manageToken}
@@ -405,7 +405,7 @@ export default function Booking({ hideHeader = false }) {
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--c-text-primary)' }}>
                 Select Treatment Category:
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
                 {TREATMENTS.map(t => (
                   <button
                     key={t.slug}
@@ -413,7 +413,7 @@ export default function Booking({ hideHeader = false }) {
                     aria-pressed={treatment === t.name}
                     onClick={() => setTreatment(t.name)}
                     style={{
-                      padding: '1rem',
+                      padding: '0.875rem 1rem',
                       borderRadius: 'var(--radius-md)',
                       border: '1.5px solid',
                       borderColor: treatment === t.name ? 'var(--c-terracotta)' : 'var(--c-border-light)',
@@ -423,7 +423,8 @@ export default function Booking({ hideHeader = false }) {
                       cursor: 'pointer',
                       fontSize: '0.9rem',
                       fontWeight: 600,
-                      transition: 'all 0.15s ease'
+                      transition: 'all 0.15s ease',
+                      width: '100%'
                     }}
                   >
                     {t.name}
@@ -572,8 +573,8 @@ export default function Booking({ hideHeader = false }) {
               )}
 
               {/* SlotGrid: Two-state design */}
-              <div style={{ background: '#FFFFFF', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border-light)', marginBottom: '1.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ background: '#FFFFFF', padding: 'clamp(1rem, 3vw, 1.5rem)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border-light)', marginBottom: '1.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '6px' }}>
                   <span style={{ fontWeight: 600, fontSize: '0.925rem', color: 'var(--c-text-primary)' }}>
                     {availableSlotsCount} times available on {selectedDate || 'selected date'}
                   </span>
@@ -596,7 +597,7 @@ export default function Booking({ hideHeader = false }) {
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(78px, 1fr))', gap: '8px' }}>
                     {availableSlotsList.map(s => {
                       const isChosen = selectedTime === s.time;
                       return (
@@ -607,7 +608,7 @@ export default function Booking({ hideHeader = false }) {
                           aria-pressed={isChosen}
                           onClick={() => { setSelectedTime(s.time); setSlotDisappearedMsg(''); }}
                           style={{
-                            padding: '10px 8px',
+                            padding: '10px 6px',
                             borderRadius: '8px',
                             border: '1.5px solid',
                             borderColor: isChosen ? 'var(--c-terracotta)' : s.available ? 'var(--c-terracotta)' : 'var(--c-border-light)',
@@ -615,7 +616,7 @@ export default function Booking({ hideHeader = false }) {
                             color: isChosen ? '#FFFFFF' : s.available ? 'var(--c-terracotta-dark)' : 'var(--c-text-muted)',
                             cursor: s.available ? 'pointer' : 'not-allowed',
                             fontWeight: 600,
-                            fontSize: '0.9rem',
+                            fontSize: '0.85rem',
                             textDecoration: s.available ? 'none' : 'line-through',
                             opacity: s.available ? 1 : 0.45,
                             transition: 'all 0.15s ease'
@@ -629,7 +630,7 @@ export default function Booking({ hideHeader = false }) {
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button type="button" className="btn btn--outline" onClick={() => setStep(1)}>
                   ← Back
                 </button>
@@ -648,7 +649,7 @@ export default function Booking({ hideHeader = false }) {
           {/* STEP 3: CONTACT DETAILS & CONSENT */}
           {step === 3 && (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
                 <div>
                   <label htmlFor="b-name" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                     Full Name *
@@ -746,7 +747,7 @@ export default function Booking({ hideHeader = false }) {
                 </label>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button type="button" className="btn btn--outline" onClick={() => setStep(2)}>
                   ← Back
                 </button>
@@ -765,12 +766,12 @@ export default function Booking({ hideHeader = false }) {
           {/* STEP 4: REVIEW & CONFIRM */}
           {step === 4 && (
             <div>
-              <div style={{ background: '#FFFFFF', padding: '1.75rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border-light)', marginBottom: '1.75rem' }}>
+              <div style={{ background: '#FFFFFF', padding: 'clamp(1rem, 3vw, 1.75rem)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border-light)', marginBottom: '1.75rem' }}>
                 <h4 style={{ margin: '0 0 1rem 0', color: 'var(--c-umber)', fontSize: '1.15rem' }}>
                   Review Consultation Summary
                 </h4>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.9rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: '1rem', fontSize: '0.9rem' }}>
                   <div>
                     <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Doctor</span>
                     <strong>Dr. Aishwarya Agarwal</strong>
@@ -798,7 +799,7 @@ export default function Booking({ hideHeader = false }) {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button type="button" className="btn btn--outline" onClick={() => setStep(3)}>
                   ← Edit Details
                 </button>
