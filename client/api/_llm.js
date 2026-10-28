@@ -186,7 +186,8 @@ export async function streamChat({ system, messages, signal, onToken, onStatus, 
   if (!secondaryApiKey) {
     console.warn('[LLM Adapter] GEMINI_API_KEY_2 is not set; running single-key Gemini without second-key hedging.');
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let timeoutId = setTimeout(() => controller.abort(), 12000);
+    let hasEmittedToken = false;
 
     const onParentAbort = () => controller.abort();
     if (signal) signal.addEventListener('abort', onParentAbort);
@@ -199,7 +200,14 @@ export async function streamChat({ system, messages, signal, onToken, onStatus, 
         signal: controller.signal,
         apiKey: primaryApiKey,
         keySlot: 'primary',
-        onChunkToken: onToken
+        onChunkToken: (token) => {
+          if (!hasEmittedToken) {
+            hasEmittedToken = true;
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => controller.abort(), 20000);
+          }
+          onToken(token);
+        }
       });
 
       clearTimeout(timeoutId);
@@ -215,6 +223,16 @@ export async function streamChat({ system, messages, signal, onToken, onStatus, 
     } catch (err) {
       clearTimeout(timeoutId);
       if (signal) signal.removeEventListener('abort', onParentAbort);
+
+      if (hasEmittedToken) {
+        return {
+          provider: 'gemini',
+          model: primaryModel,
+          success: true,
+          isFallback: false,
+          cannedFallback: false
+        };
+      }
 
       return handleFatalFallback(err, primaryModel, onToken, null, null, tStart, messages);
     }
