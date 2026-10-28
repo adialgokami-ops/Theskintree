@@ -7,8 +7,8 @@ export default function Philosophy({ preview = false }) {
       <div className="container">
         <div className="section-header">
           <span className="eyebrow">Our Philosophy</span>
-          <h2>Skin is more than surface — it is a reflection of your inner vitality.</h2>
-          <p>We combine clinical science with nature's wisdom to nurture confidence through evidence-based care and personalised plans.</p>
+          <h2 style={{ lineHeight: 1.3 }}>Skin is more than surface — it is a reflection of your inner vitality.</h2>
+          <p style={{ lineHeight: 1.8 }}>We combine clinical science with nature's wisdom to nurture confidence through evidence-based care and personalised plans.</p>
         </div>
         <div className="grid-3">
           <div className="pillar-card">
@@ -25,8 +25,8 @@ export default function Philosophy({ preview = false }) {
           </div>
         </div>
         {preview && (
-          <div style={{textAlign:'center', marginTop:'2.5rem'}}>
-            <Link to="/about" className="btn btn--outline">View all About Our Philosophy →</Link>
+          <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+            <Link to="/about" className="btn btn--outline" style={{ minHeight: '48px' }}>View all About Our Philosophy →</Link>
           </div>
         )}
       </div>

@@ -33,37 +33,38 @@ export default function Testimonials({ preview = false }) {
         >
           <div className="carousel__track" style={{transform: `translateX(-${current * 100}%)`}}>
             {slides.map((s, i) => (
-              <div key={i} className="carousel__slide testimonial-card" aria-hidden={i !== current}>
+              <div key={i} className="carousel__slide testimonial-card" style={{ padding: 'clamp(2rem, 5vw, 3rem)' }} aria-hidden={i !== current}>
                 <span className="testimonial-card__quote">“</span>
-                <p className="testimonial-card__text">{s.text}</p>
-                <div style={{marginTop: 10, display: 'flex', gap: 8, alignItems: 'center'}}>
-                  <div style={{color: 'var(--c-gold)'}}>★★★★★</div>
-                  <div className="testimonial-card__meta" style={{fontSize: '.85rem', color: 'var(--c-text-muted)'}}>{s.location}</div>
+                <p className="testimonial-card__text" style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)', lineHeight: 1.85, marginBottom: '1.75rem' }}>{s.text}</p>
+                <div style={{ marginTop: '1rem', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <div style={{ color: 'var(--c-gold)', fontSize: '1.1rem', letterSpacing: '2px' }}>★★★★★</div>
+                  <div className="testimonial-card__meta" style={{ fontSize: '.9rem', color: 'var(--c-text-muted)' }}>{s.location}</div>
                 </div>
-                <div className="testimonial-card__author" style={{marginTop: 12}}>
-                  <div className="testimonial-card__avatar">{s.author[0]}</div>
+                <div className="testimonial-card__author" style={{ marginTop: '1.5rem', gap: '1rem' }}>
+                  <div className="testimonial-card__avatar" style={{ width: '52px', height: '52px' }}>{s.author[0]}</div>
                   <div>
-                    <div className="testimonial-card__name">{s.author}</div>
+                    <div className="testimonial-card__name" style={{ fontSize: '1rem' }}>{s.author}</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="carousel__nav">
+          <div className="carousel__nav" style={{ gap: '0.75rem', marginTop: '2.5rem' }}>
             {slides.map((_, i) => (
               <button
                 key={i}
                 className={`carousel__dot ${i === current ? 'is-active' : ''}`}
                 onClick={() => goTo(i)}
                 aria-label={`Go to slide ${i + 1}`}
+                style={{ minHeight: '36px', minWidth: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               />
             ))}
           </div>
         </div>
 
         {preview && (
-          <div style={{textAlign: 'center', marginTop: '2.5rem'}}>
-            <Link to="/about" className="btn btn--outline">Read More Patient Stories & Philosophy →</Link>
+          <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+            <Link to="/about" className="btn btn--outline" style={{ minHeight: '48px' }}>Read More Patient Stories & Philosophy →</Link>
           </div>
         )}
       </div>

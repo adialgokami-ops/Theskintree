@@ -64,19 +64,19 @@ function BeforeAfter({ before, after, alt = 'Before/After', preview = false }) {
               Why results feel different here: structured, physician-led care; 15+ years experience; 98% patient satisfaction; 5,000+ patients transformed. Individual results may vary. All photos published with full patient consent.
             </p>
           </div>
-          <div style={{background: 'var(--c-cream)', padding: '1.5rem', borderRadius: 16}}>
-            <h4 style={{marginBottom: 12}}>The Clinical Experience</h4>
-            <ul style={{lineHeight: 1.8, color: 'var(--c-text-primary)'}}>
+          <div style={{ background: 'var(--c-cream)', padding: 'clamp(1.75rem, 4vw, 2.5rem)', borderRadius: 24, border: '1px solid var(--c-border-light)' }}>
+            <h4 style={{ marginBottom: '1rem', fontSize: '1.25rem', color: 'var(--c-umber)' }}>The Clinical Experience</h4>
+            <ul style={{ lineHeight: 1.85, color: 'var(--c-text-primary)', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <li><strong>1:1 Consultation</strong> — Tailored treatment mapping.</li>
               <li><strong>Physician-Led Care</strong> — Board-certified doctor oversight.</li>
               <li><strong>Evidence-Based Protocols</strong> — Proven, internationally accredited methods.</li>
             </ul>
-            <p style={{marginTop: 16, fontSize: '.875rem', color: 'var(--c-text-muted)'}}>
+            <p style={{ marginTop: '1.5rem', fontSize: '.9rem', color: 'var(--c-text-muted)', lineHeight: 1.6 }}>
               All images published with patient consent.
             </p>
             {!preview && (
-              <div style={{marginTop: 20}}>
-                <Link to="/contact" className="btn btn--primary" style={{width: '100%', justifyContent: 'center'}}>
+              <div style={{ marginTop: '1.75rem' }}>
+                <Link to="/contact" className="btn btn--primary" style={{ width: '100%', justifyContent: 'center', minHeight: '50px' }}>
                   Book Your Consultation →
                 </Link>
               </div>
@@ -85,8 +85,8 @@ function BeforeAfter({ before, after, alt = 'Before/After', preview = false }) {
         </div>
 
         {preview && (
-          <div style={{textAlign: 'center', marginTop: '2.5rem'}}>
-            <Link to="/gallery" className="btn btn--outline">View All Before & After Transformations →</Link>
+          <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+            <Link to="/gallery" className="btn btn--outline" style={{ minHeight: '48px' }}>View All Before & After Transformations →</Link>
           </div>
         )}
       </div>

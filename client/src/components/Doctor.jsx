@@ -12,10 +12,10 @@ export default function Doctor({ preview = false }) {
         <div className="split-layout">
           <div>
             <p className="lead">"My purpose is not simply to treat skin — it is to diagnose root causes and restore skin health through bespoke clinical treatment plans."</p>
-            <p>With over 15 years of specialised practice in medical and aesthetic dermatology, Dr. Aishwarya has developed internationally recognised expertise in injectables, lasers and complex skin conditions. Trained at premier institutions in India and with fellowship experience in Paris and Singapore, she blends scientific rigour with aesthetic sensitivity.</p>
+            <p style={{ lineHeight: 1.8, marginBottom: '1.5rem', color: 'var(--c-text-secondary)' }}>With over 15 years of specialised practice in medical and aesthetic dermatology, Dr. Aishwarya has developed internationally recognised expertise in injectables, lasers and complex skin conditions. Trained at premier institutions in India and with fellowship experience in Paris and Singapore, she blends scientific rigour with aesthetic sensitivity.</p>
             
             {!preview && (
-              <ul className="doctor-facts" style={{marginTop:'1.5rem'}}>
+              <ul className="doctor-facts" style={{ marginTop: '1.75rem', marginBottom: '1.75rem' }}>
                 <li><strong>Education:</strong> MBBS, MD Dermatology — All India Institute of Medical Sciences (AIIMS)</li>
                 <li><strong>International Fellowship:</strong> Advanced Aesthetic Medicine — Paris & Singapore</li>
                 <li><strong>Clinical Specialisations:</strong> Injectable Artistry, Fractional Laser, Anti-Ageing, Complex Acne</li>
@@ -24,16 +24,16 @@ export default function Doctor({ preview = false }) {
               </ul>
             )}
 
-            <div style={{marginTop:'2rem', display: 'flex', flexWrap: 'wrap', gap: '12px'}}>
+            <div style={{ marginTop: '2.25rem', display: 'flex', flexWrap: 'wrap', gap: '14px' }}>
               {preview ? (
-                <Link to="/about" className="btn btn--outline">View all about Dr. Aishwarya & Our Philosophy →</Link>
+                <Link to="/about" className="btn btn--outline" style={{ minHeight: '48px' }}>View all about Dr. Aishwarya & Our Philosophy →</Link>
               ) : (
-                <Link to="/contact" className="btn btn--primary">Book a Consultation with Dr. Aishwarya →</Link>
+                <Link to="/contact" className="btn btn--primary" style={{ minHeight: '48px' }}>Book a Consultation with Dr. Aishwarya →</Link>
               )}
             </div>
           </div>
           <div>
-            <img src="/assets/images/doctor.png" alt="Dr. Aishwarya, Lead Dermatologist at The Skin Tree" style={{borderRadius:'var(--radius-xl)',boxShadow:'var(--shadow-lg)',width:'100%',maxWidth:'480px',margin:'0 auto',display:'block'}} />
+            <img src="/assets/images/doctor.png" alt="Dr. Aishwarya, Lead Dermatologist at The Skin Tree" style={{ borderRadius: 'var(--radius-2xl)', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--c-border-light)', width: '100%', maxWidth: '480px', margin: '0 auto', display: 'block' }} />
           </div>
         </div>
       </div>

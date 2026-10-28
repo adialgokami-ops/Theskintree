@@ -76,15 +76,15 @@ export default function Gallery({ preview = false }) {
         </div>
 
         {preview ? (
-          <div style={{textAlign: 'center', marginTop: '2.5rem'}}>
-            <Link to="/gallery" className="btn btn--outline">View Full Clinic & Results Gallery →</Link>
+          <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+            <Link to="/gallery" className="btn btn--outline" style={{ minHeight: '48px' }}>View Full Clinic & Results Gallery →</Link>
           </div>
         ) : (
-          <div style={{textAlign: 'center', marginTop: '3.5rem'}}>
-            <p style={{color: 'var(--c-text-muted)', marginBottom: '1.5rem'}}>
+          <div style={{ textAlign: 'center', marginTop: '4rem' }}>
+            <p style={{ color: 'var(--c-text-muted)', marginBottom: '1.75rem', lineHeight: 1.75, fontSize: '1.05rem' }}>
               Ready to begin your personal aesthetic journey with us?
             </p>
-            <Link to="/contact" className="btn btn--primary">Book a Private Consultation →</Link>
+            <Link to="/contact" className="btn btn--primary" style={{ minHeight: '52px' }}>Book a Private Consultation →</Link>
           </div>
         )}
       </div>

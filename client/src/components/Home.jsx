@@ -51,14 +51,14 @@ export default function Home() {
       <Testimonials preview={true} />
 
       {/* Slim "Book a consultation" CTA band -> /contact */}
-      <section className="section bg-cream slim-cta-band" style={{padding: '4.5rem 0', textAlign: 'center'}}>
-        <div className="container" style={{maxWidth: 780}}>
-          <span className="eyebrow">Personalised Aesthetic Excellence</span>
-          <h2 style={{margin: '0.5rem 0 1rem'}}>Ready for Your Transformation?</h2>
-          <p style={{color: 'var(--c-text-muted)', marginBottom: '2rem', lineHeight: 1.7}}>
+      <section className="section bg-cream slim-cta-band" style={{ padding: 'clamp(4rem, 8vw, 6rem) 0', textAlign: 'center' }}>
+        <div className="container" style={{ maxWidth: 780 }}>
+          <span className="eyebrow" style={{ display: 'block', marginBottom: '0.75rem' }}>Personalised Aesthetic Excellence</span>
+          <h2 style={{ margin: '0.5rem 0 1.25rem', lineHeight: 1.25 }}>Ready for Your Transformation?</h2>
+          <p style={{ color: 'var(--c-text-muted)', marginBottom: '2.5rem', lineHeight: 1.8, fontSize: '1.05rem' }}>
             Take the first step toward radiant, healthy skin with a bespoke clinical consultation with Dr. Aishwarya.
           </p>
-          <Link to="/contact" className="btn btn--primary btn--lg">
+          <Link to="/contact" className="btn btn--primary btn--lg" style={{ minHeight: '52px' }}>
             Book a Consultation →
           </Link>
         </div>

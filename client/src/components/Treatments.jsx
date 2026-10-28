@@ -95,15 +95,15 @@ export default function Treatments({ preview = false }) {
           ))}
         </div>
 
-        <div style={{marginTop: 24}}>
+        <div style={{ marginTop: '2rem' }}>
           {displayKeys.map(k => (
             <div key={k} className="tab-panel" data-panel={k} hidden={active !== k}>
-              <div className="pillar-card">
-                <div className="pillar-card__title">{TREATMENTS[k].title}</div>
-                <p className="pillar-card__text">{TREATMENTS[k].benefit}</p>
-                <div style={{marginTop: 16, display: 'flex', gap: 12, flexWrap: 'wrap'}}>
-                  <button className="btn btn--outline" onClick={() => setModal(k)}>Learn more</button>
-                  <button className="btn btn--primary" onClick={() => handleBook(k)}>Book This Treatment</button>
+              <div className="pillar-card" style={{ textAlign: 'left', padding: 'clamp(1.75rem, 4.5vw, 2.75rem)' }}>
+                <h3 className="pillar-card__title" style={{ fontSize: 'clamp(1.35rem, 3.5vw, 1.85rem)', marginBottom: '1rem', color: 'var(--c-umber)' }}>{TREATMENTS[k].title}</h3>
+                <p className="pillar-card__text" style={{ fontSize: '1rem', lineHeight: 1.8, marginBottom: '2rem' }}>{TREATMENTS[k].benefit}</p>
+                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                  <button className="btn btn--outline" style={{ minHeight: '48px', padding: '0.9rem 1.75rem' }} onClick={() => setModal(k)}>Learn more</button>
+                  <button className="btn btn--primary" style={{ minHeight: '48px', padding: '0.9rem 1.75rem' }} onClick={() => handleBook(k)}>Book This Treatment</button>
                 </div>
               </div>
             </div>
@@ -111,8 +111,8 @@ export default function Treatments({ preview = false }) {
         </div>
 
         {preview && (
-          <div style={{textAlign: 'center', marginTop: '2.5rem'}}>
-            <Link to="/treatments" className="btn btn--outline">View All Treatments & Protocols →</Link>
+          <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+            <Link to="/treatments" className="btn btn--outline" style={{ minHeight: '48px' }}>View All Treatments & Protocols →</Link>
           </div>
         )}
 
@@ -124,39 +124,39 @@ export default function Treatments({ preview = false }) {
                 <button className="modal-close" onClick={() => setModal(null)} aria-label="Close dialog">✕</button>
               </div>
               <div id="modal-body" className="modal-body">
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '.75rem', marginBottom: '1.25rem', padding: '1rem', background: 'var(--c-cream)', borderRadius: 12}}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginBottom: '1.5rem', padding: '1.25rem 1.5rem', background: 'var(--c-cream)', borderRadius: 16 }}>
                   <div>
-                    <div style={{fontSize: '10px', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-text-light)', marginBottom: 3}}>Duration</div>
-                    <div style={{fontSize: '.875rem', fontWeight: 500, color: 'var(--c-text-primary)'}}>{TREATMENTS[modal].duration}</div>
+                    <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-text-light)', marginBottom: 4 }}>Duration</div>
+                    <div style={{ fontSize: '.95rem', fontWeight: 600, color: 'var(--c-text-primary)' }}>{TREATMENTS[modal].duration}</div>
                   </div>
                   <div>
-                    <div style={{fontSize: '10px', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-text-light)', marginBottom: 3}}>Downtime</div>
-                    <div style={{fontSize: '.875rem', fontWeight: 500, color: 'var(--c-text-primary)'}}>{TREATMENTS[modal].downtime}</div>
+                    <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-text-light)', marginBottom: 4 }}>Downtime</div>
+                    <div style={{ fontSize: '.95rem', fontWeight: 600, color: 'var(--c-text-primary)' }}>{TREATMENTS[modal].downtime}</div>
                   </div>
                 </div>
 
-                <h4 style={{fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.5rem'}}>Ideal Candidate</h4>
-                <p style={{fontSize: '.9375rem', color: 'var(--c-text-muted)', marginBottom: '1.25rem', lineHeight: 1.7}}>{TREATMENTS[modal].ideal}</p>
+                <h4 style={{ fontFamily: 'var(--font-body)', fontSize: '.8rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.6rem' }}>Ideal Candidate</h4>
+                <p style={{ fontSize: '.95rem', color: 'var(--c-text-muted)', marginBottom: '1.5rem', lineHeight: 1.75 }}>{TREATMENTS[modal].ideal}</p>
 
-                <h4 style={{fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.5rem'}}>Key Benefit</h4>
-                <p style={{fontSize: '.9375rem', color: 'var(--c-text-muted)', marginBottom: '1.25rem', lineHeight: 1.7}}>{TREATMENTS[modal].benefit}</p>
+                <h4 style={{ fontFamily: 'var(--font-body)', fontSize: '.8rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.6rem' }}>Key Benefit</h4>
+                <p style={{ fontSize: '.95rem', color: 'var(--c-text-muted)', marginBottom: '1.5rem', lineHeight: 1.75 }}>{TREATMENTS[modal].benefit}</p>
 
-                <h4 style={{fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.5rem'}}>The Procedure</h4>
-                <p style={{fontSize: '.9375rem', color: 'var(--c-text-muted)', marginBottom: '1.25rem', lineHeight: 1.7}}>{TREATMENTS[modal].procedure}</p>
+                <h4 style={{ fontFamily: 'var(--font-body)', fontSize: '.8rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.6rem' }}>The Procedure</h4>
+                <p style={{ fontSize: '.95rem', color: 'var(--c-text-muted)', marginBottom: '1.5rem', lineHeight: 1.75 }}>{TREATMENTS[modal].procedure}</p>
 
-                <h4 style={{fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.5rem'}}>Aftercare</h4>
-                <p style={{fontSize: '.9375rem', color: 'var(--c-text-muted)', lineHeight: 1.7}}>{TREATMENTS[modal].aftercare}</p>
+                <h4 style={{ fontFamily: 'var(--font-body)', fontSize: '.8rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.6rem' }}>Aftercare</h4>
+                <p style={{ fontSize: '.95rem', color: 'var(--c-text-muted)', lineHeight: 1.75 }}>{TREATMENTS[modal].aftercare}</p>
 
-                <div style={{marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--c-border-light)', textAlign: 'center'}}>
+                <div style={{ marginTop: '2rem', paddingTop: '1.75rem', borderTop: '1px solid var(--c-border-light)', textAlign: 'center' }}>
                   <button
                     type="button"
                     className="btn btn--primary"
-                    style={{width: '100%', justifyContent: 'center'}}
+                    style={{ width: '100%', justifyContent: 'center', minHeight: '52px', fontSize: '1rem' }}
                     onClick={() => handleBook(modal)}
                   >
                     Book Consultation for This Concern →
                   </button>
-                  <p style={{fontSize: '0.78rem', color: 'var(--c-text-muted)', marginTop: '0.5rem', marginBottom: 0}}>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--c-text-muted)', marginTop: '0.75rem', marginBottom: 0, lineHeight: 1.5 }}>
                     Dr. Aishwarya will assess your skin in person and curate your bespoke treatment plan.
                   </p>
                 </div>

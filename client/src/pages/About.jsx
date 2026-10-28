@@ -20,14 +20,14 @@ export default function About() {
 
       <Testimonials preview={false} />
 
-      <section className="section bg-cream" style={{textAlign: 'center', padding: '4rem 0'}}>
-        <div className="container" style={{maxWidth: 720}}>
-          <span className="eyebrow">Personalised Treatment</span>
-          <h2 style={{margin: '0.5rem 0 1rem'}}>Begin Your Journey</h2>
-          <p style={{color: 'var(--c-text-muted)', marginBottom: '2rem'}}>
+      <section className="section bg-cream" style={{ textAlign: 'center', padding: 'clamp(4rem, 8vw, 6rem) 0' }}>
+        <div className="container" style={{ maxWidth: 720 }}>
+          <span className="eyebrow" style={{ display: 'block', marginBottom: '0.75rem' }}>Personalised Treatment</span>
+          <h2 style={{ margin: '0.5rem 0 1.25rem', lineHeight: 1.25 }}>Begin Your Journey</h2>
+          <p style={{ color: 'var(--c-text-muted)', marginBottom: '2.5rem', lineHeight: 1.8, fontSize: '1.05rem' }}>
             Every transformation starts with a thorough, unhurried 1:1 clinical consultation with Dr. Aishwarya to diagnose your skin and curate a bespoke treatment plan.
           </p>
-          <Link to="/contact" className="btn btn--primary btn--lg">
+          <Link to="/contact" className="btn btn--primary btn--lg" style={{ minHeight: '52px' }}>
             Schedule a Private Consultation →
           </Link>
         </div>

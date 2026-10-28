@@ -16,14 +16,14 @@ export default function Privacy() {
           <div style={{
             background: '#FFF5EB',
             border: '1.5px solid var(--c-terracotta)',
-            borderRadius: 'var(--radius-md)',
-            padding: '1.5rem',
-            marginBottom: '2rem'
+            borderRadius: 'var(--radius-xl)',
+            padding: '1.75rem 2rem',
+            marginBottom: '2.5rem'
           }}>
-            <h4 style={{ color: 'var(--c-terracotta-dark)', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.9rem' }}>
+            <h4 style={{ color: 'var(--c-terracotta-dark)', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.925rem' }}>
               DRAFT NOTICE — PENDING QUALIFIED REVIEW
             </h4>
-            <p style={{ margin: 0, fontSize: '0.925rem', color: 'var(--c-text-secondary)', lineHeight: 1.6 }}>
+            <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--c-text-secondary)', lineHeight: 1.7 }}>
               This policy document is a developmental draft template. It must be formally reviewed and tailored by a qualified healthcare legal and privacy professional before live patient operations begin. We make no warranty of regulatory compliance in this draft state.
             </p>
           </div>

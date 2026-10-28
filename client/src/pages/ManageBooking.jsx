@@ -167,24 +167,24 @@ export default function ManageBooking() {
             <div style={{
               background: '#FFFFFF',
               border: '1px solid #D4B896',
-              borderRadius: 'var(--radius-xl)',
-              padding: 'clamp(1.5rem, 4vw, 2.5rem)',
+              borderRadius: 'var(--radius-2xl)',
+              padding: 'clamp(1.75rem, 5vw, 3rem)',
               boxShadow: 'var(--shadow-md)'
             }}>
               {/* Header card */}
-              <div style={{ borderBottom: '1px solid var(--c-border-light)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ borderBottom: '1px solid var(--c-border-light)', paddingBottom: '1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
                 <div>
                   <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--c-terracotta)', fontWeight: 600 }}>
                     Appointment Status
                   </span>
-                  <h3 style={{ margin: '4px 0 0 0', fontSize: '1.5rem', color: 'var(--c-umber)' }}>
+                  <h3 style={{ margin: '6px 0 0 0', fontSize: '1.6rem', color: 'var(--c-umber)' }}>
                     Hello, {booking.firstName}
                   </h3>
                 </div>
                 <span style={{
-                  padding: '6px 14px',
+                  padding: '8px 16px',
                   borderRadius: '999px',
-                  fontSize: '0.85rem',
+                  fontSize: '0.88rem',
                   fontWeight: 600,
                   textTransform: 'capitalize',
                   background: booking.status === 'confirmed' ? '#E7F7ED' : booking.status === 'cancelled' ? '#FEECEB' : '#FFF5EB',
@@ -195,42 +195,43 @@ export default function ManageBooking() {
               </div>
 
               {/* Details grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--c-text-muted)', fontWeight: 600, marginBottom: 4 }}>
+                  <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: 'var(--c-text-muted)', fontWeight: 600, marginBottom: 4, letterSpacing: '0.04em' }}>
                     Dermatologist
                   </div>
-                  <div style={{ fontWeight: 600, color: 'var(--c-text-primary)' }}>Dr. Aishwarya Agarwal</div>
+                  <div style={{ fontWeight: 600, color: 'var(--c-text-primary)', fontSize: '1rem' }}>Dr. Aishwarya Agarwal</div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--c-text-muted)', fontWeight: 600, marginBottom: 4 }}>
+                  <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: 'var(--c-text-muted)', fontWeight: 600, marginBottom: 4, letterSpacing: '0.04em' }}>
                     Consultation Focus
                   </div>
-                  <div style={{ fontWeight: 600, color: 'var(--c-text-primary)' }}>{booking.treatment}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--c-text-primary)', fontSize: '1rem' }}>{booking.treatment}</div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--c-text-muted)', fontWeight: 600, marginBottom: 4 }}>
+                  <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: 'var(--c-text-muted)', fontWeight: 600, marginBottom: 4, letterSpacing: '0.04em' }}>
                     Date
                   </div>
-                  <div style={{ fontWeight: 600, color: 'var(--c-text-primary)' }}>{booking.date}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--c-text-primary)', fontSize: '1rem' }}>{booking.date}</div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--c-text-muted)', fontWeight: 600, marginBottom: 4 }}>
+                  <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: 'var(--c-text-muted)', fontWeight: 600, marginBottom: 4, letterSpacing: '0.04em' }}>
                     Time Slot
                   </div>
-                  <div style={{ fontWeight: 600, color: 'var(--c-text-primary)' }}>{booking.time} IST</div>
+                  <div style={{ fontWeight: 600, color: 'var(--c-text-primary)', fontSize: '1rem' }}>{booking.time} IST</div>
                 </div>
               </div>
 
               {/* Action Buttons */}
               {booking.status !== 'cancelled' && booking.status !== 'completed' && !isRescheduling && (
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', borderTop: '1px solid var(--c-border-light)', paddingTop: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', borderTop: '1px solid var(--c-border-light)', paddingTop: '2rem' }}>
                   <button
                     type="button"
                     className="btn btn--primary"
+                    style={{ minHeight: '48px', padding: '0.95rem 1.85rem' }}
                     onClick={handleStartReschedule}
                   >
                     Reschedule Consultation
@@ -238,6 +239,7 @@ export default function ManageBooking() {
                   <button
                     type="button"
                     className="btn btn--outline"
+                    style={{ minHeight: '48px', padding: '0.95rem 1.85rem' }}
                     onClick={() => setShowCancelModal(true)}
                   >
                     Cancel Appointment
@@ -247,24 +249,24 @@ export default function ManageBooking() {
 
               {/* Reschedule Flow */}
               {isRescheduling && (
-                <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--c-border-light)', paddingTop: '1.5rem' }}>
-                  <h4 style={{ margin: '0 0 1rem 0', color: 'var(--c-umber)' }}>Select New Date & Time</h4>
+                <div style={{ marginTop: '2rem', borderTop: '1px solid var(--c-border-light)', paddingTop: '2rem' }}>
+                  <h4 style={{ margin: '0 0 1.25rem 0', color: 'var(--c-umber)', fontSize: '1.25rem' }}>Select New Date & Time</h4>
 
                   {rescheduleError && (
-                    <div style={{ background: '#FEECEB', color: '#C22C24', padding: '10px 14px', borderRadius: 8, marginBottom: '1rem', fontSize: '0.875rem' }}>
+                    <div style={{ background: '#FEECEB', color: '#C22C24', padding: '12px 16px', borderRadius: 12, marginBottom: '1.25rem', fontSize: '0.9rem' }}>
                       {rescheduleError}
                     </div>
                   )}
 
                   {loadingSlots ? (
-                    <div>Loading available slots...</div>
+                    <div style={{ padding: '1.5rem 0', color: 'var(--c-text-muted)' }}>Loading available slots...</div>
                   ) : (
                     <>
                       {/* Date selection row */}
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--c-text-muted)', marginBottom: 6 }}>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--c-text-primary)', marginBottom: 8 }}>
                         Available Dates
                       </label>
-                      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '1.5rem' }}>
                         {availableDays.map(d => {
                           const isClosed = d.closed || d.availableCount === 0;
                           return (
@@ -275,19 +277,20 @@ export default function ManageBooking() {
                               onClick={() => { setRescheduleDate(d.date); setRescheduleTime(''); }}
                               style={{
                                 flex: '0 0 auto',
-                                padding: '8px 12px',
-                                borderRadius: '10px',
-                                border: '1px solid',
+                                padding: '10px 14px',
+                                minHeight: '52px',
+                                borderRadius: '12px',
+                                border: '1.5px solid',
                                 borderColor: rescheduleDate === d.date ? 'var(--c-terracotta)' : '#D4B896',
                                 background: rescheduleDate === d.date ? 'var(--c-terracotta)' : isClosed ? '#F5ECE0' : '#FFFFFF',
                                 color: rescheduleDate === d.date ? '#FFFFFF' : isClosed ? '#B89A78' : 'var(--c-text-primary)',
                                 cursor: isClosed ? 'not-allowed' : 'pointer',
-                                fontSize: '0.8rem',
+                                fontSize: '0.85rem',
                                 textAlign: 'center'
                               }}
                             >
                               <div style={{ fontWeight: 600 }}>{d.date.slice(5)}</div>
-                              <div style={{ fontSize: '0.7rem' }}>{d.closed ? 'Closed' : `${d.availableCount} slots`}</div>
+                              <div style={{ fontSize: '0.72rem' }}>{d.closed ? 'Closed' : `${d.availableCount} slots`}</div>
                             </button>
                           );
                         })}
@@ -296,10 +299,10 @@ export default function ManageBooking() {
                       {/* Time slot selection */}
                       {selectedDayObj && (
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--c-text-muted)', marginBottom: 6 }}>
+                          <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--c-text-primary)', marginBottom: 8 }}>
                             Available Slots on {rescheduleDate}
                           </label>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(85px, 1fr))', gap: '8px', marginBottom: '1.5rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '10px', marginBottom: '2rem' }}>
                             {selectedDayObj.slots.map(s => (
                               <button
                                 key={s.time}
@@ -307,15 +310,16 @@ export default function ManageBooking() {
                                 disabled={!s.available}
                                 onClick={() => setRescheduleTime(s.time)}
                                 style={{
-                                  padding: '8px',
-                                  borderRadius: '8px',
+                                  padding: '12px 10px',
+                                  minHeight: '46px',
+                                  borderRadius: '12px',
                                   border: '1.5px solid',
                                   borderColor: rescheduleTime === s.time ? 'var(--c-terracotta)' : s.available ? '#D4B896' : '#E2CEBC',
                                   background: rescheduleTime === s.time ? 'var(--c-terracotta)' : s.available ? '#FFFFFF' : '#F5ECE0',
                                   color: rescheduleTime === s.time ? '#FFFFFF' : s.available ? 'var(--c-text-primary)' : '#B89A78',
                                   cursor: s.available ? 'pointer' : 'not-allowed',
                                   fontWeight: 600,
-                                  fontSize: '0.85rem',
+                                  fontSize: '0.88rem',
                                   textDecoration: s.available ? 'none' : 'line-through'
                                 }}
                               >
@@ -326,10 +330,11 @@ export default function ManageBooking() {
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px' }}>
                         <button
                           type="button"
                           className="btn btn--primary"
+                          style={{ minHeight: '48px', padding: '0.95rem 1.85rem' }}
                           disabled={submittingReschedule || !rescheduleDate || !rescheduleTime}
                           onClick={handleConfirmReschedule}
                         >
@@ -338,6 +343,7 @@ export default function ManageBooking() {
                         <button
                           type="button"
                           className="btn btn--outline"
+                          style={{ minHeight: '48px', padding: '0.95rem 1.85rem' }}
                           onClick={() => setIsRescheduling(false)}
                         >
                           Back
@@ -362,27 +368,28 @@ export default function ManageBooking() {
                 }}>
                   <div style={{
                     background: '#FFFFFF',
-                    borderRadius: 'var(--radius-lg)',
-                    maxWidth: '460px',
+                    borderRadius: 'var(--radius-xl)',
+                    maxWidth: '480px',
                     width: '100%',
-                    padding: '2rem',
+                    padding: 'clamp(1.75rem, 5vw, 2.5rem)',
                     boxShadow: 'var(--shadow-xl)'
                   }}>
-                    <h3 style={{ color: 'var(--c-umber)', margin: '0 0 12px 0' }}>Cancel Appointment?</h3>
-                    <p style={{ color: 'var(--c-text-muted)', lineHeight: 1.6, marginBottom: '1.5rem', fontSize: '0.95rem' }}>
+                    <h3 style={{ color: 'var(--c-umber)', margin: '0 0 14px 0', fontSize: '1.35rem', lineHeight: 1.3 }}>Cancel Appointment?</h3>
+                    <p style={{ color: 'var(--c-text-muted)', lineHeight: 1.7, marginBottom: '1.75rem', fontSize: '0.95rem' }}>
                       Are you sure you wish to cancel your consultation for <strong>{booking.date} at {booking.time}</strong>? This slot will immediately be released.
                     </p>
 
                     {cancelError && (
-                      <div style={{ background: '#FEECEB', color: '#C22C24', padding: '10px 14px', borderRadius: 8, marginBottom: '1.25rem', fontSize: '0.85rem' }}>
+                      <div style={{ background: '#FEECEB', color: '#C22C24', padding: '12px 16px', borderRadius: 10, marginBottom: '1.5rem', fontSize: '0.88rem' }}>
                         {cancelError}
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', justifyContent: 'flex-end' }}>
                       <button
                         type="button"
                         className="btn btn--outline"
+                        style={{ minHeight: '48px', padding: '0.85rem 1.6rem' }}
                         disabled={cancelling}
                         onClick={() => setShowCancelModal(false)}
                       >
@@ -391,7 +398,7 @@ export default function ManageBooking() {
                       <button
                         type="button"
                         className="btn btn--primary"
-                        style={{ background: '#C22C24', borderColor: '#C22C24' }}
+                        style={{ background: '#C22C24', borderColor: '#C22C24', minHeight: '48px', padding: '0.85rem 1.6rem' }}
                         disabled={cancelling}
                         onClick={handleConfirmCancel}
                       >

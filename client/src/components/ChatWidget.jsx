@@ -424,15 +424,15 @@ export default function ChatWidget() {
                   ))}
                   {/* If message has booked details, show confirmation card */}
                   {m.booked && (
-                    <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#F4F7F4', borderRadius: '6px', border: '1px solid #D1E0D1', fontSize: '0.85rem' }}>
+                    <div style={{ marginTop: '0.85rem', padding: '0.85rem 1rem', background: '#F4F7F4', borderRadius: '12px', border: '1px solid #D1E0D1', fontSize: '0.875rem', lineHeight: 1.6 }}>
                       <div style={{ fontWeight: 600, color: '#1B3B2B' }}>✓ Appointment Reserved</div>
-                      <div style={{ color: '#4A5568', marginTop: '2px' }}>
+                      <div style={{ color: '#4A5568', marginTop: '4px' }}>
                         Date: {m.booked.date} at {m.booked.time}
                       </div>
                       {m.booked.manageToken && (
                         <a
                           href={`/manage/${m.booked.manageToken}`}
-                          style={{ display: 'inline-block', marginTop: '6px', color: '#1B3B2B', textDecoration: 'underline', fontSize: '0.8rem' }}
+                          style={{ display: 'inline-block', marginTop: '8px', color: 'var(--c-terracotta)', fontWeight: 600, textDecoration: 'underline', fontSize: '0.85rem' }}
                         >
                           Manage or reschedule appointment →
                         </a>

@@ -285,20 +285,21 @@ export default function Booking({ hideHeader = false }) {
       className="booking-widget"
       style={{
         background: 'var(--c-cream)',
-        padding: 'clamp(1.5rem, 4vw, 2.75rem)',
-        borderRadius: 'var(--radius-xl)',
+        padding: 'clamp(1.75rem, 5vw, 3rem)',
+        borderRadius: 'var(--radius-2xl)',
         boxShadow: 'var(--shadow-md)',
-        maxWidth: '820px',
-        margin: '0 auto'
+        maxWidth: '840px',
+        margin: '0 auto',
+        border: '1px solid var(--c-border-light)'
       }}
     >
       {!hideHeader && !bookingSuccess && (
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <span className="eyebrow">Aesthetic Dermatology Consultation</span>
-          <h2 style={{ fontSize: 'var(--fs-2xl)', margin: '0.25rem 0 0.5rem 0', color: 'var(--c-umber)' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <span className="eyebrow" style={{ display: 'block', marginBottom: '0.5rem', letterSpacing: '0.12em' }}>Aesthetic Dermatology Consultation</span>
+          <h2 style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.25rem)', margin: '0.35rem 0 0.85rem 0', color: 'var(--c-umber)', lineHeight: 1.25 }}>
             Reserve Your Session
           </h2>
-          <p style={{ color: 'var(--c-text-secondary)', maxWidth: '560px', margin: '0 auto', fontSize: '0.925rem' }}>
+          <p style={{ color: 'var(--c-text-secondary)', maxWidth: '580px', margin: '0 auto', fontSize: '0.975rem', lineHeight: 1.7 }}>
             Consultation with Dr. Aishwarya Agarwal. Experience tailored assessment and bespoke dermatological treatment design.
           </p>
         </div>
@@ -306,7 +307,7 @@ export default function Booking({ hideHeader = false }) {
 
       {/* Step Progress Bar */}
       {!bookingSuccess && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2.5rem', flexWrap: 'wrap' }}>
           {[
             { num: 1, label: 'Treatment' },
             { num: 2, label: 'Date & Time' },
@@ -318,14 +319,17 @@ export default function Booking({ hideHeader = false }) {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.85rem',
+                gap: '0.5rem',
+                fontSize: '0.88rem',
                 fontWeight: step === s.num ? 700 : 500,
-                color: step === s.num ? 'var(--c-terracotta)' : 'var(--c-text-muted)'
+                color: step === s.num ? 'var(--c-terracotta)' : 'var(--c-text-muted)',
+                padding: '0.35rem 0.6rem',
+                borderRadius: '8px',
+                background: step === s.num ? 'rgba(178, 89, 54, 0.08)' : 'transparent'
               }}
             >
               <span>{s.num}. {s.label}</span>
-              {s.num < 4 && <span style={{ opacity: 0.4 }}>→</span>}
+              {s.num < 4 && <span style={{ opacity: 0.35, marginLeft: '0.25rem' }}>→</span>}
             </div>
           ))}
         </div>
@@ -338,10 +342,10 @@ export default function Booking({ hideHeader = false }) {
           color: '#C22C24',
           border: '1px solid rgba(194, 44, 36, 0.3)',
           borderRadius: 'var(--radius-md)',
-          padding: '12px 16px',
-          marginBottom: '1.5rem',
-          fontSize: '0.9rem',
-          lineHeight: 1.5
+          padding: '14px 18px',
+          marginBottom: '2rem',
+          fontSize: '0.925rem',
+          lineHeight: 1.6
         }}>
           {submitError}
         </div>
@@ -349,20 +353,21 @@ export default function Booking({ hideHeader = false }) {
 
       {/* SUCCESS SCREEN */}
       {bookingSuccess ? (
-        <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌿</div>
-          <span className="eyebrow" style={{ color: 'var(--c-terracotta)' }}>Request Received</span>
-          <h3 style={{ fontSize: 'var(--fs-2xl)', color: 'var(--c-umber)', margin: '0.5rem 0 1rem', maxWidth: '580px', marginLeft: 'auto', marginRight: 'auto' }}>
+        <div style={{ textAlign: 'center', padding: 'clamp(2rem, 5vw, 3rem) 1.5rem' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: '1.25rem' }}>🌿</div>
+          <span className="eyebrow" style={{ color: 'var(--c-terracotta)', display: 'block', marginBottom: '0.5rem' }}>Request Received</span>
+          <h3 style={{ fontSize: 'clamp(1.4rem, 3.5vw, 1.875rem)', color: 'var(--c-umber)', margin: '0.5rem 0 1.25rem', maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.35 }}>
             Request received. This is not confirmed yet. Our team will call or WhatsApp you to confirm.
           </h3>
-          <p style={{ color: 'var(--c-text-primary)', fontSize: '1rem', lineHeight: 1.6, maxWidth: '520px', margin: '0 auto 1.5rem' }}>
+          <p style={{ color: 'var(--c-text-primary)', fontSize: '1rem', lineHeight: 1.75, maxWidth: '540px', margin: '0 auto 2rem' }}>
             Dear <strong>{bookingSuccess.name}</strong>, your consultation appointment request with <strong>Dr. Aishwarya Agarwal</strong> for <strong>{bookingSuccess.treatment}</strong> has been received for <strong>{bookingSuccess.date}</strong> at <strong>{bookingSuccess.time} IST</strong>.
           </p>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '2rem' }}>
             <button
               type="button"
               className="btn btn--primary"
+              style={{ minHeight: '48px', padding: '0.95rem 1.75rem' }}
               onClick={handleDownloadICS}
             >
               📅 Add to Calendar (.ics)
@@ -373,13 +378,14 @@ export default function Booking({ hideHeader = false }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn--outline"
+                style={{ minHeight: '48px', padding: '0.95rem 1.75rem' }}
               >
                 💬 WhatsApp Concierge
               </a>
             ) : null}
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.7)', padding: '14px 18px', borderRadius: '12px', maxWidth: '480px', width: '100%', margin: '0 auto', fontSize: '0.85rem', color: 'var(--c-text-secondary)', wordBreak: 'break-word' }}>
+          <div style={{ background: 'rgba(255,255,255,0.75)', padding: '16px 20px', borderRadius: '16px', maxWidth: '500px', width: '100%', margin: '0 auto', fontSize: '0.88rem', color: 'var(--c-text-secondary)', lineHeight: 1.6, wordBreak: 'break-word', border: '1px solid var(--c-border-light)' }}>
             Need to reschedule or cancel? You can manage your booking anytime at:{' '}
             <Link to={`/manage/${bookingSuccess.manageToken}`} style={{ color: 'var(--c-terracotta)', fontWeight: 600, wordBreak: 'break-all' }}>
               /manage/{bookingSuccess.manageToken}
@@ -402,10 +408,10 @@ export default function Booking({ hideHeader = false }) {
           {/* STEP 1: TREATMENT SELECTOR */}
           {step === 1 && (
             <div>
-              <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--c-text-primary)' }}>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '1rem', color: 'var(--c-text-primary)', fontSize: '0.95rem', letterSpacing: '0.01em' }}>
                 Select Treatment Category:
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
                 {TREATMENTS.map(t => (
                   <button
                     key={t.slug}
@@ -413,18 +419,22 @@ export default function Booking({ hideHeader = false }) {
                     aria-pressed={treatment === t.name}
                     onClick={() => setTreatment(t.name)}
                     style={{
-                      padding: '0.875rem 1rem',
-                      borderRadius: 'var(--radius-md)',
+                      padding: '1rem 1.25rem',
+                      minHeight: '52px',
+                      borderRadius: '16px',
                       border: '1.5px solid',
                       borderColor: treatment === t.name ? 'var(--c-terracotta)' : 'var(--c-border-light)',
                       background: treatment === t.name ? 'var(--c-terracotta)' : '#FFFFFF',
                       color: treatment === t.name ? '#FFFFFF' : 'var(--c-text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      fontSize: '0.9rem',
+                      fontSize: '0.95rem',
                       fontWeight: 600,
+                      boxShadow: treatment === t.name ? '0 4px 14px var(--c-terracotta-glow)' : '0 2px 6px rgba(44, 24, 16, 0.03)',
                       transition: 'all 0.15s ease',
-                      width: '100%'
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center'
                     }}
                   >
                     {t.name}
@@ -432,10 +442,11 @@ export default function Booking({ hideHeader = false }) {
                 ))}
               </div>
 
-              <div style={{ textAlign: 'center' }}>
+              <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                 <button
                   type="button"
                   className="btn btn--primary"
+                  style={{ padding: '1rem 2.5rem', minHeight: '50px' }}
                   onClick={() => setStep(2)}
                 >
                   Next: Select Date & Time →
@@ -448,26 +459,27 @@ export default function Booking({ hideHeader = false }) {
           {step === 2 && (
             <div>
               {slotDisappearedMsg && (
-                <div style={{ background: '#FFF5EB', color: 'var(--c-terracotta-dark)', padding: '10px 14px', borderRadius: 8, marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+                <div style={{ background: '#FFF5EB', color: 'var(--c-terracotta-dark)', padding: '12px 16px', borderRadius: 12, marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
                   {slotDisappearedMsg}
                 </div>
               )}
 
               {/* DateStrip: 14 Days */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '8px' }}>
-                <label style={{ fontWeight: 600, color: 'var(--c-text-primary)', fontSize: '0.9rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>
+                <label style={{ fontWeight: 600, color: 'var(--c-text-primary)', fontSize: '0.95rem' }}>
                   Select Consultation Date (Next 14 Days):
                 </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--c-text-muted)' }}>More dates:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--c-text-muted)' }}>More dates:</span>
                   <input
                     type="date"
                     onChange={handleCustomDateChange}
                     style={{
-                      padding: '4px 8px',
-                      borderRadius: '6px',
+                      padding: '6px 10px',
+                      minHeight: '38px',
+                      borderRadius: '8px',
                       border: '1px solid var(--c-border)',
-                      fontSize: '0.8rem',
+                      fontSize: '0.85rem',
                       background: '#FFFFFF',
                       color: 'var(--c-text-primary)'
                     }}
@@ -477,22 +489,22 @@ export default function Booking({ hideHeader = false }) {
 
               {slotsError && days.length === 0 ? (
                 <div style={{
-                  padding: '1.25rem',
-                  borderRadius: '12px',
+                  padding: '1.75rem',
+                  borderRadius: '16px',
                   background: '#FFF5EB',
                   border: '1px solid rgba(184, 93, 58, 0.25)',
                   textAlign: 'center',
-                  marginBottom: '1.5rem'
+                  marginBottom: '2rem'
                 }}>
-                  <p style={{ margin: '0 0 0.75rem 0', color: 'var(--c-terracotta-dark)', fontWeight: 600, fontSize: '0.9rem' }}>
+                  <p style={{ margin: '0 0 1rem 0', color: 'var(--c-terracotta-dark)', fontWeight: 600, fontSize: '0.95rem', lineHeight: 1.5 }}>
                     Calendar service is temporarily taking longer to respond.
                   </p>
-                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       onClick={() => fetchSlots(false)}
                       className="btn btn--primary"
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                      style={{ padding: '0.75rem 1.25rem', fontSize: '0.875rem' }}
                     >
                       🔄 Retry Loading Times
                     </button>
@@ -502,7 +514,7 @@ export default function Booking({ hideHeader = false }) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn--outline"
-                        style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                        style={{ padding: '0.75rem 1.25rem', fontSize: '0.875rem' }}
                       >
                         💬 WhatsApp Concierge
                       </a>
@@ -512,10 +524,10 @@ export default function Booking({ hideHeader = false }) {
               ) : (
                 <div style={{
                   display: 'flex',
-                  gap: '8px',
+                  gap: '10px',
                   overflowX: 'auto',
-                  paddingBottom: '12px',
-                  marginBottom: '1.5rem',
+                  paddingBottom: '14px',
+                  marginBottom: '2rem',
                   WebkitOverflowScrolling: 'touch'
                 }}>
                   {loadingSlots && days.length === 0 ? (
@@ -524,10 +536,11 @@ export default function Booking({ hideHeader = false }) {
                       <div
                         key={i}
                         style={{
-                          flex: '0 0 74px',
-                          height: '70px',
+                          flex: '0 0 82px',
+                          minWidth: '82px',
+                          height: '84px',
                           background: 'rgba(212, 184, 150, 0.3)',
-                          borderRadius: '10px',
+                          borderRadius: '14px',
                           animation: 'pulse 1.5s infinite'
                         }}
                       />
@@ -547,9 +560,11 @@ export default function Booking({ hideHeader = false }) {
                           disabled={isClosed}
                           onClick={() => { setSelectedDate(d.date); setSelectedTime(''); setSlotDisappearedMsg(''); }}
                           style={{
-                            flex: '0 0 74px',
-                            padding: '8px 4px',
-                            borderRadius: '10px',
+                            flex: '0 0 82px',
+                            minWidth: '82px',
+                            height: '84px',
+                            padding: '12px 6px',
+                            borderRadius: '14px',
                             border: '1.5px solid',
                             borderColor: isSelected ? 'var(--c-terracotta)' : isClosed ? 'rgba(212, 184, 150, 0.3)' : 'var(--c-border)',
                             background: isSelected ? 'var(--c-terracotta)' : isClosed ? 'rgba(239, 221, 206, 0.4)' : '#FFFFFF',
@@ -557,12 +572,17 @@ export default function Booking({ hideHeader = false }) {
                             cursor: isClosed ? 'not-allowed' : 'pointer',
                             textAlign: 'center',
                             opacity: isClosed ? 0.6 : 1,
-                            transition: 'all 0.15s ease'
+                            boxShadow: isSelected ? '0 4px 14px var(--c-terracotta-glow)' : 'none',
+                            transition: 'all 0.15s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                           }}
                         >
-                          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.8 }}>{weekday}</div>
-                          <div style={{ fontSize: '1.15rem', fontWeight: 700, margin: '2px 0' }}>{dayNum}</div>
-                          <div style={{ fontSize: '0.68rem', fontWeight: 500 }}>
+                          <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', opacity: 0.85, fontWeight: 500 }}>{weekday}</div>
+                          <div style={{ fontSize: '1.25rem', fontWeight: 700, margin: '3px 0' }}>{dayNum}</div>
+                          <div style={{ fontSize: '0.72rem', fontWeight: 500 }}>
                             {d.closed ? 'Closed' : `${d.availableCount} slots`}
                           </div>
                         </button>
@@ -573,31 +593,32 @@ export default function Booking({ hideHeader = false }) {
               )}
 
               {/* SlotGrid: Two-state design */}
-              <div style={{ background: '#FFFFFF', padding: 'clamp(1rem, 3vw, 1.5rem)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border-light)', marginBottom: '1.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '6px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.925rem', color: 'var(--c-text-primary)' }}>
+              <div style={{ background: '#FFFFFF', padding: 'clamp(1.5rem, 4vw, 2.25rem)', borderRadius: '20px', border: '1px solid var(--c-border-light)', boxShadow: 'var(--shadow-sm)', marginBottom: '2.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '8px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--c-text-primary)' }}>
                     {availableSlotsCount} times available on {selectedDate || 'selected date'}
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--c-text-muted)' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--c-text-muted)' }}>
                     Refreshes every 15s
                   </span>
                 </div>
 
                 {availableSlotsCount === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                    <p style={{ color: 'var(--c-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                    <p style={{ color: 'var(--c-text-muted)', marginBottom: '1.25rem', fontSize: '0.95rem', lineHeight: 1.6 }}>
                       No consultation times available on this date.
                     </p>
                     <button
                       type="button"
                       className="btn btn--outline"
+                      style={{ padding: '0.85rem 1.5rem' }}
                       onClick={handleNextDayWithSlots}
                     >
                       Show Next Available Day →
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(78px, 1fr))', gap: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(88px, 1fr))', gap: '10px' }}>
                     {availableSlotsList.map(s => {
                       const isChosen = selectedTime === s.time;
                       return (
@@ -608,17 +629,19 @@ export default function Booking({ hideHeader = false }) {
                           aria-pressed={isChosen}
                           onClick={() => { setSelectedTime(s.time); setSlotDisappearedMsg(''); }}
                           style={{
-                            padding: '10px 6px',
-                            borderRadius: '8px',
+                            padding: '13px 10px',
+                            minHeight: '48px',
+                            borderRadius: '12px',
                             border: '1.5px solid',
                             borderColor: isChosen ? 'var(--c-terracotta)' : s.available ? 'var(--c-terracotta)' : 'var(--c-border-light)',
                             background: isChosen ? 'var(--c-terracotta)' : s.available ? '#FFFFFF' : 'rgba(239, 221, 206, 0.3)',
                             color: isChosen ? '#FFFFFF' : s.available ? 'var(--c-terracotta-dark)' : 'var(--c-text-muted)',
                             cursor: s.available ? 'pointer' : 'not-allowed',
                             fontWeight: 600,
-                            fontSize: '0.85rem',
+                            fontSize: '0.9rem',
                             textDecoration: s.available ? 'none' : 'line-through',
                             opacity: s.available ? 1 : 0.45,
+                            boxShadow: isChosen ? '0 4px 12px var(--c-terracotta-glow)' : 'none',
                             transition: 'all 0.15s ease'
                           }}
                         >
@@ -630,13 +653,14 @@ export default function Booking({ hideHeader = false }) {
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button type="button" className="btn btn--outline" onClick={() => setStep(1)}>
+              <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn--outline" style={{ padding: '0.95rem 1.85rem', minHeight: '48px' }} onClick={() => setStep(1)}>
                   ← Back
                 </button>
                 <button
                   type="button"
                   className="btn btn--primary"
+                  style={{ padding: '0.95rem 2rem', minHeight: '48px' }}
                   disabled={!selectedDate || !selectedTime}
                   onClick={() => setStep(3)}
                 >
@@ -649,16 +673,16 @@ export default function Booking({ hideHeader = false }) {
           {/* STEP 3: CONTACT DETAILS & CONSENT */}
           {step === 3 && (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                 <div>
-                  <label htmlFor="b-name" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  <label htmlFor="b-name" style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--c-text-primary)' }}>
                     Full Name *
                   </label>
                   <input
                     id="b-name"
                     type="text"
                     required
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--c-border)', fontSize: '16px' }}
+                    style={{ width: '100%', padding: '14px 16px', minHeight: '50px', borderRadius: 14, border: '1.5px solid var(--c-border)', fontSize: '16px', background: '#FFFFFF', outline: 'none' }}
                     placeholder="e.g. Ananya Sharma"
                     value={name}
                     onChange={e => setName(e.target.value)}
@@ -666,7 +690,7 @@ export default function Booking({ hideHeader = false }) {
                 </div>
 
                 <div>
-                  <label htmlFor="b-phone" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  <label htmlFor="b-phone" style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--c-text-primary)' }}>
                     Phone Number *
                   </label>
                   <input
@@ -674,7 +698,7 @@ export default function Booking({ hideHeader = false }) {
                     type="tel"
                     autoComplete="tel"
                     required
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--c-border)', fontSize: '16px' }}
+                    style={{ width: '100%', padding: '14px 16px', minHeight: '50px', borderRadius: 14, border: '1.5px solid var(--c-border)', fontSize: '16px', background: '#FFFFFF', outline: 'none' }}
                     placeholder="+91 98765 43210"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
@@ -682,13 +706,13 @@ export default function Booking({ hideHeader = false }) {
                 </div>
 
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label htmlFor="b-email" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  <label htmlFor="b-email" style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--c-text-primary)' }}>
                     Email Address (Optional — for calendar invite & management link)
                   </label>
                   <input
                     id="b-email"
                     type="email"
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--c-border)', fontSize: '16px' }}
+                    style={{ width: '100%', padding: '14px 16px', minHeight: '50px', borderRadius: 14, border: '1.5px solid var(--c-border)', fontSize: '16px', background: '#FFFFFF', outline: 'none' }}
                     placeholder="name@example.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
@@ -696,27 +720,27 @@ export default function Booking({ hideHeader = false }) {
                 </div>
 
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label htmlFor="b-notes" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  <label htmlFor="b-notes" style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--c-text-primary)' }}>
                     Notes (Optional — max 500 characters)
                   </label>
                   <textarea
                     id="b-notes"
                     rows="3"
                     maxLength={500}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--c-border)', fontSize: '16px' }}
+                    style={{ width: '100%', padding: '14px 16px', minHeight: '120px', borderRadius: 14, border: '1.5px solid var(--c-border)', fontSize: '16px', background: '#FFFFFF', outline: 'none', lineHeight: 1.6 }}
                     placeholder="General consultation goals..."
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                   />
-                  <div style={{ fontSize: '0.75rem', color: 'var(--c-text-muted)', marginTop: 4 }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--c-text-muted)', marginTop: 6 }}>
                     Please do not share medical details here; discuss them with the doctor.
                   </div>
                 </div>
               </div>
 
               {/* AI-Processing Disclosure (DPDP Act 2023 Compliance) */}
-              <div style={{ marginBottom: '1.25rem', padding: '12px 14px', background: 'rgba(184, 93, 58, 0.06)', borderRadius: 8, border: '1px solid rgba(184, 93, 58, 0.2)', fontSize: '0.8125rem', color: 'var(--c-umber)', lineHeight: 1.5 }}>
-                <strong style={{ color: 'var(--c-terracotta)', display: 'block', marginBottom: '2px' }}>
+              <div style={{ marginBottom: '1.5rem', padding: '16px 18px', background: 'rgba(184, 93, 58, 0.06)', borderRadius: 14, border: '1px solid rgba(184, 93, 58, 0.2)', fontSize: '0.85rem', color: 'var(--c-umber)', lineHeight: 1.65 }}>
+                <strong style={{ color: 'var(--c-terracotta)', display: 'block', marginBottom: '4px' }}>
                   🌿 AI-Assisted Concierge Disclosure (DPDP Act 2023)
                 </strong>
                 Our digital concierge uses AI assistance for treatment inquiries, clinic information, and appointment scheduling.
@@ -725,35 +749,36 @@ export default function Booking({ hideHeader = false }) {
               </div>
 
               {/* Cloudflare Turnstile Bot Defense Container */}
-              <div ref={turnstileContainerRef} id="turnstile-widget" style={{ marginBottom: '1.25rem', minHeight: '40px' }}></div>
+              <div ref={turnstileContainerRef} id="turnstile-widget" style={{ marginBottom: '1.5rem', minHeight: '40px' }}></div>
 
               {/* Mandatory Consent Checkbox */}
-              <div style={{ marginBottom: '1.75rem', padding: '12px 16px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--c-border-light)' }}>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '0.875rem', lineHeight: 1.5 }}>
+              <div style={{ marginBottom: '2rem', padding: '16px 20px', background: '#FFFFFF', borderRadius: 16, border: '1px solid var(--c-border-light)' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', fontSize: '0.9rem', lineHeight: 1.6 }}>
                   <input
                     type="checkbox"
                     required
                     checked={consent}
                     onChange={e => setConsent(e.target.checked)}
-                    style={{ marginTop: 3 }}
+                    style={{ marginTop: 4, width: '18px', height: '18px', accentColor: 'var(--c-terracotta)', flexShrink: 0 }}
                   />
                   <span>
                     I consent to The Skin Tree processing my contact details for appointment scheduling in accordance with the{' '}
                     <Link to="/privacy" target="_blank" style={{ color: 'var(--c-terracotta)', fontWeight: 600 }}>
                       Privacy Notice
                     </Link>{' '}
-                    <span style={{ fontSize: '0.75rem', color: 'var(--c-text-muted)' }}>(v{CONSENT_VERSION})</span>.
+                    <span style={{ fontSize: '0.78rem', color: 'var(--c-text-muted)' }}>(v{CONSENT_VERSION})</span>.
                   </span>
                 </label>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button type="button" className="btn btn--outline" onClick={() => setStep(2)}>
+              <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn--outline" style={{ padding: '0.95rem 1.85rem', minHeight: '48px' }} onClick={() => setStep(2)}>
                   ← Back
                 </button>
                 <button
                   type="button"
                   className="btn btn--primary"
+                  style={{ padding: '0.95rem 2rem', minHeight: '48px' }}
                   disabled={!validateStep(3)}
                   onClick={() => setStep(4)}
                 >
@@ -766,46 +791,47 @@ export default function Booking({ hideHeader = false }) {
           {/* STEP 4: REVIEW & CONFIRM */}
           {step === 4 && (
             <div>
-              <div style={{ background: '#FFFFFF', padding: 'clamp(1rem, 3vw, 1.75rem)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border-light)', marginBottom: '1.75rem' }}>
-                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--c-umber)', fontSize: '1.15rem' }}>
+              <div style={{ background: '#FFFFFF', padding: 'clamp(1.5rem, 4vw, 2.25rem)', borderRadius: '20px', border: '1px solid var(--c-border-light)', boxShadow: 'var(--shadow-sm)', marginBottom: '2rem' }}>
+                <h4 style={{ margin: '0 0 1.25rem 0', color: 'var(--c-umber)', fontSize: '1.25rem', lineHeight: 1.3 }}>
                   Review Consultation Summary
                 </h4>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: '1rem', fontSize: '0.9rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: '1.25rem', fontSize: '0.95rem' }}>
                   <div>
-                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Doctor</span>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>Doctor</span>
                     <strong>Dr. Aishwarya Agarwal</strong>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Focus</span>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>Focus</span>
                     <strong>{treatment}</strong>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Date</span>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>Date</span>
                     <strong>{selectedDate}</strong>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Time Slot</span>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>Time Slot</span>
                     <strong>{selectedTime} IST</strong>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Patient Name</span>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>Patient Name</span>
                     <strong>{name}</strong>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Contact Number</span>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>Contact Number</span>
                     <strong>{phone}</strong>
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button type="button" className="btn btn--outline" onClick={() => setStep(3)}>
+              <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn--outline" style={{ padding: '0.95rem 1.85rem', minHeight: '48px' }} onClick={() => setStep(3)}>
                   ← Edit Details
                 </button>
                 <button
                   type="submit"
                   className="btn btn--primary"
+                  style={{ padding: '1.05rem 2.5rem', minHeight: '52px', fontSize: '1rem' }}
                   disabled={submitting}
                 >
                   {submitting ? 'Submitting Request…' : 'Submit Consultation Request'}
