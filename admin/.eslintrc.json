@@ -1,0 +1,25 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/ClinicalStore*", "../clinical/ClinicalStore*"],
+            "message": "ClinicalStore is strictly private to admin/server/clinical/ and must not be imported anywhere else."
+          }
+        ]
+      }
+    ]
+  }
+}

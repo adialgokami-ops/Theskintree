@@ -1,0 +1,26 @@
+{
+  "name": "the-skin-tree-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "admin",
+    "shared"
+  ],
+  "scripts": {
+    "dev:client": "npm run dev -w client",
+    "dev:admin": "npm run dev -w admin",
+    "build:client": "npm run check:isolation && npm run build -w client",
+    "build:admin": "npm run build -w admin",
+    "build": "npm run check:isolation && npm run build -w client && npm run build -w admin",
+    "check:isolation": "node scripts/check-isolation.mjs",
+    "test:unit": "node scripts/unit-tests.mjs",
+    "test:privilege": "node scripts/db-privilege-test.mjs",
+    "test:race": "node scripts/race-test.mjs",
+    "seed": "node scripts/seed-demo.mjs"
+  },
+  "dependencies": {
+    "postgres": "^3.4.4",
+    "ws": "^8.22.0"
+  }
+}

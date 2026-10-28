@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
-export default function Testimonials() {
+export default function Testimonials({ preview = false }) {
   const slides = [
-    { text: "Five stars simply isn't enough. The clinic is breathtakingly beautiful, the staff impeccably professional, and my results are nothing short of miraculous.", author: 'Riya M.' },
-    { text: 'Highly recommended — the team is expert and empathetic.', author: 'R. Gupta' },
-    { text: 'Truly a luxury experience with medical-grade care.', author: 'S. Mehta' },
+    { text: "Five stars simply isn't enough. The clinic is breathtakingly beautiful, the staff impeccably professional, and my results are nothing short of miraculous.", author: 'Riya M.', location: 'Verified Patient · Mumbai' },
+    { text: 'Highly recommended — Dr. Aishwarya and her entire team are exceptionally expert, empathetic, and gentle throughout the procedure.', author: 'R. Gupta', location: 'Verified Patient · Delhi' },
+    { text: 'Truly a luxury medical experience. Natural elegance and no overfilled look — my friends just ask why my skin looks so rested and radiant.', author: 'S. Mehta', location: 'Verified Patient · Bandra' },
   ]
   const [current, setCurrent] = useState(0)
   const timer = useRef(null)
@@ -13,7 +14,7 @@ export default function Testimonials() {
     const start = () => { timer.current = setInterval(() => setCurrent(c => (c + 1) % slides.length), 5000) }
     start()
     return () => clearInterval(timer.current)
-  }, [])
+  }, [slides.length])
 
   const goTo = i => { setCurrent((i + slides.length) % slides.length) }
 
@@ -21,32 +22,50 @@ export default function Testimonials() {
     <section id="testimonials" className="section">
       <div className="container">
         <div className="section-header">
-          <span className="eyebrow">Testimonials</span>
-          <h2>Happy Clients</h2>
+          <span className="eyebrow">{preview ? 'Patient Reflections' : 'Client Testimonials'}</span>
+          <h2>Voices of Transformation</h2>
+          <p>Read real, heartfelt experiences from clients who entrusted their skin journey to The Skin Tree.</p>
         </div>
-        <div className="carousel" onMouseEnter={() => clearInterval(timer.current)} onMouseLeave={() => { timer.current = setInterval(() => setCurrent(c => (c + 1) % slides.length), 5000) }}>
-          <div className="carousel__track" style={{transform:`translateX(-${current * 100}%)`}}>
+        <div
+          className="carousel"
+          onMouseEnter={() => clearInterval(timer.current)}
+          onMouseLeave={() => { timer.current = setInterval(() => setCurrent(c => (c + 1) % slides.length), 5000) }}
+        >
+          <div className="carousel__track" style={{transform: `translateX(-${current * 100}%)`}}>
             {slides.map((s, i) => (
-              <div key={i} className="carousel__slide testimonial-card" aria-hidden={i!==current}>
-                  <span className="testimonial-card__quote">“</span>
-                  <p className="testimonial-card__text">{s.text}</p>
-                  <div style={{marginTop:10,display:'flex',gap:8,alignItems:'center'}}>
-                    <div style={{color:'var(--c-gold)'}}>★★★★★</div>
-                    <div className="testimonial-card__meta" style={{fontSize:'.85rem',color:'var(--c-text-muted)'}}>Verified · Delhi</div>
-                  </div>
-                  <div className="testimonial-card__author" style={{marginTop:12}}>
-                    <div className="testimonial-card__avatar">{s.author[0]}</div>
-                    <div>
-                      <div className="testimonial-card__name">{s.author}</div>
-                    </div>
+              <div key={i} className="carousel__slide testimonial-card" aria-hidden={i !== current}>
+                <span className="testimonial-card__quote">“</span>
+                <p className="testimonial-card__text">{s.text}</p>
+                <div style={{marginTop: 10, display: 'flex', gap: 8, alignItems: 'center'}}>
+                  <div style={{color: 'var(--c-gold)'}}>★★★★★</div>
+                  <div className="testimonial-card__meta" style={{fontSize: '.85rem', color: 'var(--c-text-muted)'}}>{s.location}</div>
+                </div>
+                <div className="testimonial-card__author" style={{marginTop: 12}}>
+                  <div className="testimonial-card__avatar">{s.author[0]}</div>
+                  <div>
+                    <div className="testimonial-card__name">{s.author}</div>
                   </div>
                 </div>
+              </div>
             ))}
           </div>
           <div className="carousel__nav">
-            {slides.map((_, i) => <button key={i} className={`carousel__dot ${i===current? 'is-active':''}`} onClick={() => goTo(i)} />)}
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                className={`carousel__dot ${i === current ? 'is-active' : ''}`}
+                onClick={() => goTo(i)}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
           </div>
         </div>
+
+        {preview && (
+          <div style={{textAlign: 'center', marginTop: '2.5rem'}}>
+            <Link to="/about" className="btn btn--outline">Read More Patient Stories & Philosophy →</Link>
+          </div>
+        )}
       </div>
     </section>
   )

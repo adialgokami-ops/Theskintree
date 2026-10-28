@@ -8,23 +8,6 @@
    - simple parallax for .hero__bg
 */
 (() => {
-  // Hamburger
-  const btn = document.getElementById('nav-hamburger');
-  const menu = document.getElementById('nav-mobile-menu');
-  if (btn && menu) {
-    btn.addEventListener('click', () => {
-      const open = menu.classList.toggle('is-open');
-      btn.classList.toggle('is-open', open);
-      document.body.style.overflow = open ? 'hidden' : '';
-      btn.setAttribute('aria-expanded', open);
-    });
-    menu.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => {
-      menu.classList.remove('is-open');
-      btn.classList.remove('is-open');
-      document.body.style.overflow = '';
-    }));
-  }
-
   // Scroll reveal
   const els = document.querySelectorAll('.reveal');
   if (els.length) {
@@ -55,17 +38,6 @@
     }, { threshold: 0.5 });
     counters.forEach(c => io.observe(c));
   }
-
-  // Smooth anchor
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const target = document.querySelector(a.getAttribute('href'));
-      if (!target) return;
-      e.preventDefault();
-      const navH = document.querySelector('.navbar')?.offsetHeight || 80;
-      window.scrollTo({ top: target.offsetTop - navH - 16, behavior: 'smooth' });
-    });
-  });
 
   // Lazy images
   const imgs = document.querySelectorAll('img[data-src]');

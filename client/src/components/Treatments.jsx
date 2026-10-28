@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
-const TREATMENTS = {
+export const TREATMENTS = {
   botox: {
     title: 'Botulinum Toxin (Botox®)',
     duration: '20–30 minutes', downtime: 'None',
@@ -24,8 +25,7 @@ const TREATMENTS = {
     benefit: 'Instantly luminous, plump, refined skin — zero downtime',
     procedure: 'Multi-step vortex technology simultaneously cleanses, exfoliates, extracts impurities, and infuses customised serums.',
     aftercare: 'Avoid exfoliants for 72h. Apply SPF daily.'
-  }
-  ,
+  },
   laser: {
     title: 'Fractional Laser Resurfacing',
     duration: '45–90 minutes', downtime: '3–7 days',
@@ -60,62 +60,105 @@ const TREATMENTS = {
   }
 }
 
-export default function Treatments(){
-  const keys = Object.keys(TREATMENTS)
-  const [active, setActive] = useState(keys[0])
+export default function Treatments({ preview = false }) {
+  const allKeys = Object.keys(TREATMENTS)
+  const displayKeys = preview ? ['botox', 'fillers', 'hydrafacial'] : allKeys
+  const [active, setActive] = useState(displayKeys[0])
   const [modal, setModal] = useState(null)
+  const navigate = useNavigate()
+
+  const handleBook = (k) => {
+    const treatmentTitle = TREATMENTS[k]?.title || k
+    setModal(null)
+    navigate('/contact', { state: { treatment: treatmentTitle } })
+  }
 
   return (
     <section id="treatments" className="section">
       <div className="container">
         <div className="section-header">
-          <span className="eyebrow">Our Treatments</span>
-          <h2>Signature Treatments</h2>
+          <span className="eyebrow">{preview ? 'Featured Treatments' : 'Our Treatments'}</span>
+          <h2>{preview ? 'Signature Procedures' : 'All Clinical Protocols'}</h2>
           <p>Precision-crafted aesthetic procedures, each designed around your unique skin story.</p>
         </div>
 
         <div className="tabs" role="tablist">
-          {keys.map(k => (
-            <button key={k} className={`tab-btn ${active===k? 'is-active':''}`} data-tab={k} onClick={()=>setActive(k)}>{TREATMENTS[k].title}</button>
+          {displayKeys.map(k => (
+            <button
+              key={k}
+              className={`tab-btn ${active === k ? 'is-active' : ''}`}
+              data-tab={k}
+              onClick={() => setActive(k)}
+            >
+              {TREATMENTS[k].title}
+            </button>
           ))}
         </div>
 
-        <div style={{marginTop:24}}>
-          {keys.map(k => (
-            <div key={k} className="tab-panel" data-panel={k} hidden={active!==k}>
+        <div style={{marginTop: 24}}>
+          {displayKeys.map(k => (
+            <div key={k} className="tab-panel" data-panel={k} hidden={active !== k}>
               <div className="pillar-card">
                 <div className="pillar-card__title">{TREATMENTS[k].title}</div>
                 <p className="pillar-card__text">{TREATMENTS[k].benefit}</p>
-                <div style={{marginTop:12}}>
-                  <button className="btn btn--primary" data-modal-treatment={k} onClick={() => setModal(k)}>Learn more</button>
+                <div style={{marginTop: 16, display: 'flex', gap: 12, flexWrap: 'wrap'}}>
+                  <button className="btn btn--outline" onClick={() => setModal(k)}>Learn more</button>
+                  <button className="btn btn--primary" onClick={() => handleBook(k)}>Book This Treatment</button>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
+        {preview && (
+          <div style={{textAlign: 'center', marginTop: '2.5rem'}}>
+            <Link to="/treatments" className="btn btn--outline">View All Treatments & Protocols →</Link>
+          </div>
+        )}
+
         {modal && (
-          <div id="treatment-modal" className="modal-backdrop is-open" onClick={(e)=>{ if (e.target === e.currentTarget) setModal(null)}}>
+          <div id="treatment-modal" className="modal-backdrop is-open" onClick={(e) => { if (e.target === e.currentTarget) setModal(null) }}>
             <div className="modal-content">
               <div className="modal-header">
                 <h3 id="modal-title" className="modal-title">{TREATMENTS[modal].title}</h3>
-                <button className="modal-close" onClick={()=>setModal(null)}>✕</button>
+                <button className="modal-close" onClick={() => setModal(null)} aria-label="Close dialog">✕</button>
               </div>
               <div id="modal-body" className="modal-body">
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.75rem',marginBottom:'1.25rem',padding:'1rem',background:'var(--c-cream)',borderRadius:12}}>
-                  <div><div style={{fontSize:'10px',fontWeight:600,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--c-text-light)',marginBottom:3}}>Duration</div><div style={{fontSize:'.875rem',fontWeight:500,color:'var(--c-text-primary)'}}>{TREATMENTS[modal].duration}</div></div>
-                  <div><div style={{fontSize:'10px',fontWeight:600,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--c-text-light)',marginBottom:3}}>Downtime</div><div style={{fontSize:'.875rem',fontWeight:500,color:'var(--c-text-primary)'}}>{TREATMENTS[modal].downtime}</div></div>
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem', marginBottom: '1.25rem', padding: '1rem', background: 'var(--c-cream)', borderRadius: 12}}>
+                  <div>
+                    <div style={{fontSize: '10px', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-text-light)', marginBottom: 3}}>Duration</div>
+                    <div style={{fontSize: '.875rem', fontWeight: 500, color: 'var(--c-text-primary)'}}>{TREATMENTS[modal].duration}</div>
+                  </div>
+                  <div>
+                    <div style={{fontSize: '10px', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-text-light)', marginBottom: 3}}>Downtime</div>
+                    <div style={{fontSize: '.875rem', fontWeight: 500, color: 'var(--c-text-primary)'}}>{TREATMENTS[modal].downtime}</div>
+                  </div>
                 </div>
-                <h4 style={{fontFamily:'var(--font-body)',fontSize:'.75rem',fontWeight:600,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--c-terracotta)',marginBottom:'.5rem'}}>Ideal Candidate</h4>
-                <p style={{fontSize:'.9375rem',color:'var(--c-text-muted)',marginBottom:'1.25rem',lineHeight:1.7}}>{TREATMENTS[modal].ideal}</p>
-                <h4 style={{fontFamily:'var(--font-body)',fontSize:'.75rem',fontWeight:600,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--c-terracotta)',marginBottom:'.5rem'}}>Key Benefit</h4>
-                <p style={{fontSize:'.9375rem',color:'var(--c-text-muted)',marginBottom:'1.25rem',lineHeight:1.7}}>{TREATMENTS[modal].benefit}</p>
-                <h4 style={{fontFamily:'var(--font-body)',fontSize:'.75rem',fontWeight:600,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--c-terracotta)',marginBottom:'.5rem'}}>The Procedure</h4>
-                <p style={{fontSize:'.9375rem',color:'var(--c-text-muted)',marginBottom:'1.25rem',lineHeight:1.7}}>{TREATMENTS[modal].procedure}</p>
-                <h4 style={{fontFamily:'var(--font-body)',fontSize:'.75rem',fontWeight:600,letterSpacing:'.12em',textTransform:'uppercase',color:'var(--c-terracotta)',marginBottom:'.5rem'}}>Aftercare</h4>
-                <p style={{fontSize:'.9375rem',color:'var(--c-text-muted)',lineHeight:1.7}}>{TREATMENTS[modal].aftercare}</p>
-                <div style={{marginTop:'1.5rem',paddingTop:'1.5rem',borderTop:'1px solid var(--c-border-light)'}}>
-                  <a href="#booking" className="btn btn--primary" style={{width:'100%',justifyContent:'center'}}>Book This Treatment</a>
+
+                <h4 style={{fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.5rem'}}>Ideal Candidate</h4>
+                <p style={{fontSize: '.9375rem', color: 'var(--c-text-muted)', marginBottom: '1.25rem', lineHeight: 1.7}}>{TREATMENTS[modal].ideal}</p>
+
+                <h4 style={{fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.5rem'}}>Key Benefit</h4>
+                <p style={{fontSize: '.9375rem', color: 'var(--c-text-muted)', marginBottom: '1.25rem', lineHeight: 1.7}}>{TREATMENTS[modal].benefit}</p>
+
+                <h4 style={{fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.5rem'}}>The Procedure</h4>
+                <p style={{fontSize: '.9375rem', color: 'var(--c-text-muted)', marginBottom: '1.25rem', lineHeight: 1.7}}>{TREATMENTS[modal].procedure}</p>
+
+                <h4 style={{fontFamily: 'var(--font-body)', fontSize: '.75rem', fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--c-terracotta)', marginBottom: '.5rem'}}>Aftercare</h4>
+                <p style={{fontSize: '.9375rem', color: 'var(--c-text-muted)', lineHeight: 1.7}}>{TREATMENTS[modal].aftercare}</p>
+
+                <div style={{marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--c-border-light)', textAlign: 'center'}}>
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    style={{width: '100%', justifyContent: 'center'}}
+                    onClick={() => handleBook(modal)}
+                  >
+                    Book Consultation for This Concern →
+                  </button>
+                  <p style={{fontSize: '0.78rem', color: 'var(--c-text-muted)', marginTop: '0.5rem', marginBottom: 0}}>
+                    Dr. Aishwarya will assess your skin in person and curate your bespoke treatment plan.
+                  </p>
                 </div>
               </div>
             </div>

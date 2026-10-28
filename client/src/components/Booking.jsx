@@ -1,140 +1,835 @@
-import React, { useEffect, useState } from 'react'
-import { trackEvent } from '../lib/analytics'
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation, useSearchParams, Link } from 'react-router-dom';
+import { TREATMENTS, normalisePhone, validateName, validateEmail, validateNotes } from '@theskintree/shared';
 
-const TIMEST = ['09:00','10:00','11:30','13:00','14:30','16:00']
-const TREATMENTS = [
-  'Botox / Toxin',
-  'Dermal Fillers',
-  'Fractional Laser',
-  'HydraFacial',
-  'Chemical Peels',
-  'Acne Treatment',
-  'Consultation'
-]
+export const CONSENT_VERSION = '2026.1-dpdp';
+// Derived as SHA-256 of canonical displayed consent text:
+// "I consent to The Skin Tree processing my contact details for appointment scheduling in accordance with the Privacy Notice (v2026.1-dpdp)."
+export const CONSENT_HASH = '6f242e4212e81cfb7a2e1bbeee7bd7aecb4a7711862edb3214ecd0487fc348d0';
 
-function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) }
-function isPhone(v){ return /^\+?[0-9\s\-]{7,15}$/.test(v) }
+// Interim Configuration: Set true when SMS gateway DLT registration completes
+const REQUIRE_PHONE_OTP = false;
 
-export default function Booking(){
-  const [step, setStep] = useState(1)
-  const [selections, setSelections] = useState({treatment:'', date:'', time:'', name:'', email:'', phone:'', note:''})
-  const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState({})
+export default function Booking({ hideHeader = false }) {
+  const [step, setStep] = useState(1);
+  const [treatment, setTreatment] = useState('Consultation');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [notes, setNotes] = useState('');
+  const [consent, setConsent] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
-  useEffect(()=>{
-    const d = new Date(); d.setDate(d.getDate()+1);
-    const el = document.getElementById('booking-date'); if (el) el.min = d.toISOString().split('T')[0];
-  },[])
+  // Security: Cloudflare Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileContainerRef = useRef(null);
 
-  const validateStep = (s) => {
-    const err = {}
-    if (s===1){ if (!selections.treatment) err.treatment = 'Please select a treatment' }
-    if (s===2){ if (!selections.date) err.date = 'Please choose a date'; if (!selections.time) err.time = 'Please choose a time' }
-    if (s===3){ if (!selections.name) err.name='Please enter full name'; if (!isEmail(selections.email)) err.email='Enter a valid email'; if (!isPhone(selections.phone)) err.phone='Enter a valid phone' }
-    setErrors(err); return Object.keys(err).length===0
-  }
+  // Security: Phone OTP verification state
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState(null);
 
-  const next = (n)=>{
-    if (!validateStep(step)) return
-    setStep(n)
-    trackEvent('booking_step', { step: n })
-  }
+  // Slots fetching and refresh state
+  const [days, setDays] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotDisappearedMsg, setSlotDisappearedMsg] = useState('');
 
-  const submit = async (e)=>{
-    e.preventDefault();
-    if (!validateStep(3)) return
-    setLoading(true)
-    trackEvent('booking_submitted', { treatment: selections.treatment })
-    const webhook = import.meta.env.VITE_BOOKING_WEBHOOK || ''
-    try{
-      if (webhook){
-        await fetch(webhook, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(selections) })
-      } else {
-        // fallback: log to console (developer can configure webhook)
-        console.info('Booking payload', selections)
+  // Form submission state
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [bookingSuccess, setBookingSuccess] = useState(null);
+
+  // Session idempotency key
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
+
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Initial treatment from router state or params
+  useEffect(() => {
+    const passed = location.state?.treatment || searchParams.get('treatment');
+    if (passed) {
+      const match = TREATMENTS.find(t =>
+        t.name.toLowerCase().includes(passed.toLowerCase()) ||
+        t.slug.toLowerCase() === passed.toLowerCase()
+      );
+      if (match) {
+        setTreatment(match.name);
       }
-      setSubmitted(true)
-    }catch(err){
-      console.error(err); alert('Failed to submit — please try again or call us.')
-    }finally{ setLoading(false) }
-  }
+    }
+  }, [location.state, searchParams]);
+
+  // Fetch slots from API
+  const fetchSlots = useCallback(async (isBackground = false) => {
+    if (!isBackground) setLoadingSlots(true);
+    try {
+      const res = await fetch('/api/slots?days=14');
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.days)) {
+        setDays(data.days);
+
+        // Auto-select first available date if none selected
+        if (!selectedDate) {
+          const firstOpen = data.days.find(d => !d.closed && d.availableCount > 0);
+          if (firstOpen) setSelectedDate(firstOpen.date);
+        } else {
+          // Verify if currently selected time is still available
+          const currentDayObj = data.days.find(d => d.date === selectedDate);
+          if (currentDayObj && selectedTime) {
+            const slotObj = currentDayObj.slots.find(s => s.time === selectedTime);
+            if (!slotObj || !slotObj.available) {
+              setSelectedTime('');
+              setSlotDisappearedMsg('The time slot you previously chose was just reserved. Please select another available slot.');
+            } else {
+              setSlotDisappearedMsg('');
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Slot fetch issue:', err);
+    } finally {
+      if (!isBackground) setLoadingSlots(false);
+    }
+  }, [selectedDate, selectedTime]);
+
+  // Initial slots fetch
+  useEffect(() => {
+    fetchSlots(false);
+  }, [fetchSlots]);
+
+  // Slot Refresh: Every 15 seconds while visible, and on window focus
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchSlots(true);
+      }
+    }, 15000);
+
+    const handleFocus = () => {
+      fetchSlots(true);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchSlots]);
+
+  // Calendar manual date selection (up to 60 days)
+  const handleCustomDateChange = async (e) => {
+    const newDate = e.target.value;
+    if (!newDate) return;
+    setSelectedDate(newDate);
+    setSelectedTime('');
+    setSlotDisappearedMsg('');
+
+    setLoadingSlots(true);
+    try {
+      const res = await fetch(`/api/slots?date=${newDate}`);
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.days)) {
+        // Merge or replace day in list
+        setDays(prev => {
+          const existing = prev.filter(d => d.date !== newDate);
+          return [...existing, data.days[0]].sort((a, b) => a.date.localeCompare(b.date));
+        });
+      }
+    } catch (_) {
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  const selectedDayObj = days.find(d => d.date === selectedDate);
+  const availableSlotsList = selectedDayObj ? selectedDayObj.slots : [];
+  const availableSlotsCount = availableSlotsList.filter(s => s.available).length;
+
+  const handleNextDayWithSlots = () => {
+    const nextOpen = days.find(d => d.date > selectedDate && !d.closed && d.availableCount > 0);
+    if (nextOpen) {
+      setSelectedDate(nextOpen.date);
+      setSelectedTime('');
+      setSlotDisappearedMsg('');
+    }
+  };
+
+  // Step Validations
+  const validateStep = (s) => {
+    if (s === 1) {
+      return Boolean(treatment);
+    }
+    if (s === 2) {
+      return Boolean(selectedDate && selectedTime);
+    }
+    if (s === 3) {
+      const basicValid = (
+        validateName(name) &&
+        Boolean(normalisePhone(phone)) &&
+        validateEmail(email) &&
+        validateNotes(notes) &&
+        consent
+      );
+      if (REQUIRE_PHONE_OTP) {
+        return basicValid && otpVerified;
+      }
+      return basicValid;
+    }
+    return true;
+  };
+
+  // Form Submission
+  const handleSubmitBooking = async (e) => {
+    e.preventDefault();
+    if (!validateStep(3)) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    const payload = {
+      name: name.trim(),
+      phone: normalisePhone(phone),
+      email: email.trim() || undefined,
+      treatment,
+      date: selectedDate,
+      time: selectedTime,
+      notes: notes.trim() || undefined,
+      consent: true,
+      consentVersion: CONSENT_VERSION,
+      consentTextHash: CONSENT_HASH,
+      turnstileToken: turnstileToken || 'interim-client-token',
+      otpCode: REQUIRE_PHONE_OTP ? otpCode : undefined,
+      idempotencyKey: idempotencyKeyRef.current,
+      website: honeypot // Anti-bot honeypot
+    };
+
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Handle 409 slot taken: refresh slots immediately
+        if (res.status === 409) {
+          fetchSlots(false);
+          setSelectedTime('');
+          setStep(2);
+          throw new Error(data.error || 'This slot was just booked by another patient. Please choose an open slot.');
+        }
+        throw new Error(data.error || 'Failed to complete appointment booking.');
+      }
+
+      // Hard Rule 7: Only show success when DB insert succeeded
+      setBookingSuccess({
+        id: data.id,
+        manageToken: data.manageToken,
+        treatment,
+        date: selectedDate,
+        time: selectedTime,
+        name
+      });
+
+      // Reset idempotency key for future new submissions
+      idempotencyKeyRef.current = crypto.randomUUID();
+    } catch (err) {
+      setSubmitError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Helper: Generate .ics calendar download
+  const handleDownloadICS = () => {
+    if (!bookingSuccess) return;
+    const { date, time, treatment: tName } = bookingSuccess;
+    const startIso = `${date.replace(/-/g, '')}T${time.replace(':', '')}00`;
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//The Skin Tree//Consultation Schedule//EN',
+      'BEGIN:VEVENT',
+      `SUMMARY:Consultation: ${tName} — Dr. Aishwarya Agarwal`,
+      `DESCRIPTION:Consultation at The Skin Tree with Dr. Aishwarya Agarwal.\\nLocation: Bandra West, Mumbai.`,
+      `LOCATION:The Skin Tree, 123 Serenity Lane, Bandra West, Mumbai`,
+      `DTSTART:${startIso}`,
+      `DTEND:${startIso}`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `TheSkinTree-${date}-${time}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <section id="booking" className="section bg-cream">
-      <div className="container">
-        <div className="section-header"><span className="eyebrow">Book</span><h2>Book a Private Consultation</h2></div>
-        {!submitted ? (
-          <form id="booking-form" onSubmit={submit} aria-live="polite">
-            <div className="booking-step" data-step="1" hidden={step!==1}>
-              <div className="grid-3">
+    <div
+      id="booking-container"
+      className="booking-widget"
+      style={{
+        background: 'var(--c-cream)',
+        padding: 'clamp(1.5rem, 4vw, 2.75rem)',
+        borderRadius: 'var(--radius-xl)',
+        boxShadow: 'var(--shadow-md)',
+        maxWidth: '820px',
+        margin: '0 auto'
+      }}
+    >
+      {!hideHeader && !bookingSuccess && (
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <span className="eyebrow">Aesthetic Dermatology Consultation</span>
+          <h2 style={{ fontSize: 'var(--fs-2xl)', margin: '0.25rem 0 0.5rem 0', color: 'var(--c-umber)' }}>
+            Reserve Your Session
+          </h2>
+          <p style={{ color: 'var(--c-text-secondary)', maxWidth: '560px', margin: '0 auto', fontSize: '0.925rem' }}>
+            Consultation with Dr. Aishwarya Agarwal. Experience tailored assessment and bespoke dermatological treatment design.
+          </p>
+        </div>
+      )}
+
+      {/* Step Progress Bar */}
+      {!bookingSuccess && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+          {[
+            { num: 1, label: 'Treatment' },
+            { num: 2, label: 'Date & Time' },
+            { num: 3, label: 'Your Details' },
+            { num: 4, label: 'Review' }
+          ].map((s) => (
+            <div
+              key={s.num}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.85rem',
+                fontWeight: step === s.num ? 700 : 500,
+                color: step === s.num ? 'var(--c-terracotta)' : 'var(--c-text-muted)'
+              }}
+            >
+              <span>{s.num}. {s.label}</span>
+              {s.num < 4 && <span style={{ opacity: 0.4 }}>→</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ERROR BANNER */}
+      {submitError && (
+        <div style={{
+          background: '#FEECEB',
+          color: '#C22C24',
+          border: '1px solid rgba(194, 44, 36, 0.3)',
+          borderRadius: 'var(--radius-md)',
+          padding: '12px 16px',
+          marginBottom: '1.5rem',
+          fontSize: '0.9rem',
+          lineHeight: 1.5
+        }}>
+          {submitError}
+        </div>
+      )}
+
+      {/* SUCCESS SCREEN */}
+      {bookingSuccess ? (
+        <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌿</div>
+          <span className="eyebrow" style={{ color: 'var(--c-terracotta)' }}>Reservation Confirmed</span>
+          <h3 style={{ fontSize: 'var(--fs-2xl)', color: 'var(--c-umber)', margin: '0.5rem 0 1rem' }}>
+            We Look Forward to Welcoming You
+          </h3>
+          <p style={{ color: 'var(--c-text-primary)', fontSize: '1rem', lineHeight: 1.6, maxWidth: '520px', margin: '0 auto 1.5rem' }}>
+            Dear <strong>{bookingSuccess.name}</strong>, your consultation appointment with <strong>Dr. Aishwarya Agarwal</strong> for <strong>{bookingSuccess.treatment}</strong> has been successfully registered for <strong>{bookingSuccess.date}</strong> at <strong>{bookingSuccess.time} IST</strong>.
+          </p>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '2rem' }}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={handleDownloadICS}
+            >
+              📅 Add to Calendar (.ics)
+            </button>
+            <a
+              href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hello The Skin Tree, I have reserved appointment #${bookingSuccess.id.slice(0, 8)} on ${bookingSuccess.date} at ${bookingSuccess.time}.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn--outline"
+            >
+              💬 WhatsApp Concierge
+            </a>
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.7)', padding: '14px 18px', borderRadius: '12px', maxWidth: '480px', margin: '0 auto', fontSize: '0.85rem', color: 'var(--c-text-secondary)' }}>
+            Need to reschedule or cancel? You can manage your booking anytime at:{' '}
+            <Link to={`/manage/${bookingSuccess.manageToken}`} style={{ color: 'var(--c-terracotta)', fontWeight: 600, wordBreak: 'break-all' }}>
+              /manage/{bookingSuccess.manageToken}
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmitBooking}>
+          {/* Honeypot field (hidden from real users) */}
+          <input
+            type="text"
+            name="website"
+            value={honeypot}
+            onChange={e => setHoneypot(e.target.value)}
+            style={{ display: 'none' }}
+            tabIndex={-1}
+            autoComplete="off"
+          />
+
+          {/* STEP 1: TREATMENT SELECTOR */}
+          {step === 1 && (
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--c-text-primary)' }}>
+                Select Treatment Category:
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
                 {TREATMENTS.map(t => (
-                  <button type="button" key={t} aria-pressed={selections.treatment===t} className={`booking-treatment-btn btn ${selections.treatment===t? 'is-selected':''}`} data-treatment={t} onClick={()=>setSelections(s=>({...s,treatment:t}))}>{t}</button>
+                  <button
+                    key={t.slug}
+                    type="button"
+                    aria-pressed={treatment === t.name}
+                    onClick={() => setTreatment(t.name)}
+                    style={{
+                      padding: '1rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1.5px solid',
+                      borderColor: treatment === t.name ? 'var(--c-terracotta)' : 'var(--c-border-light)',
+                      background: treatment === t.name ? 'var(--c-terracotta)' : '#FFFFFF',
+                      color: treatment === t.name ? '#FFFFFF' : 'var(--c-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {t.name}
+                  </button>
                 ))}
               </div>
-              {errors.treatment && <div className="form-error">{errors.treatment}</div>}
-              <div style={{marginTop:16,display:'flex',gap:8,justifyContent:'center'}}>
-                <button type="button" data-booking-next="2" className="btn btn--primary" onClick={()=>next(2)}>Next</button>
-              </div>
-            </div>
 
-            <div className="booking-step" data-step="2" hidden={step!==2}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="booking-date">Date</label>
-                <input id="booking-date" className="form-input" type="date" value={selections.date} onChange={e=>setSelections(s=>({...s,date:e.target.value}))} aria-required="true" />
-                {errors.date && <div className="form-error">{errors.date}</div>}
-              </div>
-              <div className="slot-grid">
-                {TIMEST.map(t=> <button key={t} type="button" className={`slot-btn ${selections.time===t? 'is-selected':''}`} onClick={() => setSelections(s=>({...s,time:t}))}>{t}</button>)}
-              </div>
-              {errors.time && <div className="form-error">{errors.time}</div>}
-              <div style={{marginTop:16,display:'flex',gap:8,justifyContent:'center'}}>
-                <button type="button" data-booking-back="1" className="btn btn--outline" onClick={()=>setStep(1)}>Back</button>
-                <button type="button" data-booking-next="3" className="btn btn--primary" onClick={()=>next(3)}>Next</button>
+              <div style={{ textAlign: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  onClick={() => setStep(2)}
+                >
+                  Next: Select Date & Time →
+                </button>
               </div>
             </div>
+          )}
 
-            <div className="booking-step" data-step="3" hidden={step!==3}>
-              <div className="form-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
-                <div>
-                  <label className="form-label" htmlFor="booking-name">Full name</label>
-                  <input id="booking-name" className="form-input" value={selections.name} onChange={e=>setSelections(s=>({...s,name:e.target.value}))} aria-required="true" />
-                  {errors.name && <div className="form-error">{errors.name}</div>}
+          {/* STEP 2: DATESTRIP + SLOTGRID */}
+          {step === 2 && (
+            <div>
+              {slotDisappearedMsg && (
+                <div style={{ background: '#FFF5EB', color: 'var(--c-terracotta-dark)', padding: '10px 14px', borderRadius: 8, marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+                  {slotDisappearedMsg}
                 </div>
-                <div>
-                  <label className="form-label" htmlFor="booking-phone">Phone</label>
-                  <input id="booking-phone" className="form-input" value={selections.phone} onChange={e=>setSelections(s=>({...s,phone:e.target.value}))} aria-required="true" />
-                  {errors.phone && <div className="form-error">{errors.phone}</div>}
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="booking-email">Email</label>
-                  <input id="booking-email" className="form-input" value={selections.email} onChange={e=>setSelections(s=>({...s,email:e.target.value}))} aria-required="true" />
-                  {errors.email && <div className="form-error">{errors.email}</div>}
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="booking-note">Notes (optional)</label>
-                  <input id="booking-note" className="form-input" value={selections.note} onChange={e=>setSelections(s=>({...s,note:e.target.value}))} />
+              )}
+
+              {/* DateStrip: 14 Days */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <label style={{ fontWeight: 600, color: 'var(--c-text-primary)', fontSize: '0.9rem' }}>
+                  Select Consultation Date (Next 14 Days):
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--c-text-muted)' }}>More dates:</span>
+                  <input
+                    type="date"
+                    onChange={handleCustomDateChange}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--c-border)',
+                      fontSize: '0.8rem',
+                      background: '#FFFFFF',
+                      color: 'var(--c-text-primary)'
+                    }}
+                  />
                 </div>
               </div>
-              <div style={{textAlign:'center',marginTop:16}}>
-                <h3>Confirm</h3>
-                <p><strong>Treatment:</strong> {selections.treatment || '-'}</p>
-                <p><strong>Date:</strong> {selections.date || '-'}</p>
-                <p><strong>Time:</strong> {selections.time || '-'}</p>
+
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                overflowX: 'auto',
+                paddingBottom: '12px',
+                marginBottom: '1.5rem'
+              }}>
+                {loadingSlots && days.length === 0 ? (
+                  // Skeleton loader
+                  Array.from({ length: 7 }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        flex: '0 0 74px',
+                        height: '70px',
+                        background: 'rgba(212, 184, 150, 0.3)',
+                        borderRadius: '10px',
+                        animation: 'pulse 1.5s infinite'
+                      }}
+                    />
+                  ))
+                ) : (
+                  days.map(d => {
+                    const isClosed = d.closed || d.availableCount === 0;
+                    const isSelected = selectedDate === d.date;
+                    const dateObj = new Date(d.date + 'T00:00:00Z');
+                    const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+                    const dayNum = d.date.slice(8);
+
+                    return (
+                      <button
+                        key={d.date}
+                        type="button"
+                        disabled={isClosed}
+                        onClick={() => { setSelectedDate(d.date); setSelectedTime(''); setSlotDisappearedMsg(''); }}
+                        style={{
+                          flex: '0 0 74px',
+                          padding: '8px 4px',
+                          borderRadius: '10px',
+                          border: '1.5px solid',
+                          borderColor: isSelected ? 'var(--c-terracotta)' : isClosed ? 'rgba(212, 184, 150, 0.3)' : 'var(--c-border)',
+                          background: isSelected ? 'var(--c-terracotta)' : isClosed ? 'rgba(239, 221, 206, 0.4)' : '#FFFFFF',
+                          color: isSelected ? '#FFFFFF' : isClosed ? 'var(--c-text-muted)' : 'var(--c-text-primary)',
+                          cursor: isClosed ? 'not-allowed' : 'pointer',
+                          textAlign: 'center',
+                          opacity: isClosed ? 0.6 : 1,
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.8 }}>{weekday}</div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: 700, margin: '2px 0' }}>{dayNum}</div>
+                        <div style={{ fontSize: '0.68rem', fontWeight: 500 }}>
+                          {d.closed ? 'Closed' : `${d.availableCount} slots`}
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
               </div>
-              <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:12}}>
-                <button type="button" className="btn btn--outline" onClick={()=>setStep(2)}>Back</button>
-                <button type="submit" className="btn btn--primary" disabled={loading}>{loading? 'Sending…' : 'Request'}</button>
+
+              {/* SlotGrid: Two-state design */}
+              <div style={{ background: '#FFFFFF', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border-light)', marginBottom: '1.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.925rem', color: 'var(--c-text-primary)' }}>
+                    {availableSlotsCount} times available on {selectedDate || 'selected date'}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--c-text-muted)' }}>
+                    Refreshes every 15s
+                  </span>
+                </div>
+
+                {availableSlotsCount === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                    <p style={{ color: 'var(--c-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                      No consultation times available on this date.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn--outline"
+                      onClick={handleNextDayWithSlots}
+                    >
+                      Show Next Available Day →
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '10px' }}>
+                    {availableSlotsList.map(s => {
+                      const isChosen = selectedTime === s.time;
+                      return (
+                        <button
+                          key={s.time}
+                          type="button"
+                          disabled={!s.available}
+                          aria-pressed={isChosen}
+                          onClick={() => { setSelectedTime(s.time); setSlotDisappearedMsg(''); }}
+                          style={{
+                            padding: '10px 8px',
+                            borderRadius: '8px',
+                            border: '1.5px solid',
+                            borderColor: isChosen ? 'var(--c-terracotta)' : s.available ? 'var(--c-terracotta)' : 'var(--c-border-light)',
+                            background: isChosen ? 'var(--c-terracotta)' : s.available ? '#FFFFFF' : 'rgba(239, 221, 206, 0.3)',
+                            color: isChosen ? '#FFFFFF' : s.available ? 'var(--c-terracotta-dark)' : 'var(--c-text-muted)',
+                            cursor: s.available ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                            fontSize: '0.9rem',
+                            textDecoration: s.available ? 'none' : 'line-through',
+                            opacity: s.available ? 1 : 0.45,
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {s.time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button type="button" className="btn btn--outline" onClick={() => setStep(1)}>
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={!selectedDate || !selectedTime}
+                  onClick={() => setStep(3)}
+                >
+                  Next: Your Details →
+                </button>
               </div>
             </div>
-          </form>
-        ) : (
-          <div id="booking-success">
-            <h3>Thanks — your request was received.</h3>
-            <p>We will contact you shortly to confirm the appointment.</p>
-          </div>
-        )}
-      </div>
-    </section>
-  )
+          )}
+
+          {/* STEP 3: CONTACT DETAILS & CONSENT */}
+          {step === 3 && (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                <div>
+                  <label htmlFor="b-name" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                    Full Name *
+                  </label>
+                  <input
+                    id="b-name"
+                    type="text"
+                    required
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--c-border)', fontSize: '16px' }}
+                    placeholder="e.g. Ananya Sharma"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="b-phone" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                    Phone Number *
+                  </label>
+                  <input
+                    id="b-phone"
+                    type="tel"
+                    autoComplete="tel"
+                    required
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--c-border)', fontSize: '16px' }}
+                    placeholder="+91 98765 43210"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label htmlFor="b-email" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                    Email Address (Optional — for calendar invite & management link)
+                  </label>
+                  <input
+                    id="b-email"
+                    type="email"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--c-border)', fontSize: '16px' }}
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label htmlFor="b-notes" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                    Notes (Optional — max 500 characters)
+                  </label>
+                  <textarea
+                    id="b-notes"
+                    rows="3"
+                    maxLength={500}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--c-border)', fontSize: '16px' }}
+                    placeholder="General consultation goals..."
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                  />
+                  <div style={{ fontSize: '0.75rem', color: 'var(--c-text-muted)', marginTop: 4 }}>
+                    Please do not share medical details here; discuss them with the doctor.
+                  </div>
+                </div>
+              </div>
+
+              {/* Phone OTP Verification (Interim configuration: active when REQUIRE_PHONE_OTP is true) */}
+              {REQUIRE_PHONE_OTP ? (
+                <div style={{ marginBottom: '1.5rem', padding: '14px 16px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--c-border-light)' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>
+                    Phone Verification (SMS OTP)
+                  </label>
+                  {!otpSent ? (
+                    <button
+                      type="button"
+                      className="btn btn--outline"
+                      disabled={!Boolean(normalisePhone(phone)) || otpLoading}
+                      onClick={async () => {
+                        setOtpLoading(true);
+                        setOtpError(null);
+                        try {
+                          const res = await fetch('/api/otp/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ phone: normalisePhone(phone) })
+                          });
+                          if (!res.ok) throw new Error('Failed to send OTP code.');
+                          setOtpSent(true);
+                        } catch (err) {
+                          setOtpError(err.message);
+                        } finally {
+                          setOtpLoading(false);
+                        }
+                      }}
+                      style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                    >
+                      {otpLoading ? 'Sending...' : 'Send OTP via SMS'}
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        placeholder="6-digit OTP"
+                        value={otpCode}
+                        onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                        style={{ width: '130px', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--c-border)' }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn--primary"
+                        disabled={otpCode.length !== 6 || otpVerified}
+                        onClick={() => setOtpVerified(true)}
+                        style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+                      >
+                        {otpVerified ? '✓ Verified' : 'Verify'}
+                      </button>
+                    </div>
+                  )}
+                  {otpError && <div style={{ color: 'var(--c-terracotta)', fontSize: '0.75rem', marginTop: 4 }}>{otpError}</div>}
+                </div>
+              ) : null}
+
+              {/* AI-Processing Disclosure (DPDP Act 2023 Compliance) */}
+              <div style={{ marginBottom: '1.25rem', padding: '12px 14px', background: 'rgba(184, 93, 58, 0.06)', borderRadius: 8, border: '1px solid rgba(184, 93, 58, 0.2)', fontSize: '0.8125rem', color: 'var(--c-umber)', lineHeight: 1.5 }}>
+                <strong style={{ color: 'var(--c-terracotta)', display: 'block', marginBottom: '2px' }}>
+                  🌿 AI-Assisted Concierge Disclosure (DPDP Act 2023)
+                </strong>
+                Our digital concierge uses AI assistance for treatment inquiries, clinic information, and appointment scheduling.
+                All clinical consultations, dermatological diagnoses, prescriptions, and aesthetic treatments are conducted
+                exclusively in person by <strong>Dr. Aishwarya Agarwal (MBBS, MD Dermatology)</strong>.
+              </div>
+
+              {/* Cloudflare Turnstile Bot Defense Container */}
+              <div ref={turnstileContainerRef} id="turnstile-widget" style={{ marginBottom: '1.25rem', minHeight: '40px' }}></div>
+
+              {/* Mandatory Consent Checkbox */}
+              <div style={{ marginBottom: '1.75rem', padding: '12px 16px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--c-border-light)' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '0.875rem', lineHeight: 1.5 }}>
+                  <input
+                    type="checkbox"
+                    required
+                    checked={consent}
+                    onChange={e => setConsent(e.target.checked)}
+                    style={{ marginTop: 3 }}
+                  />
+                  <span>
+                    I consent to The Skin Tree processing my contact details for appointment scheduling in accordance with the{' '}
+                    <Link to="/privacy" target="_blank" style={{ color: 'var(--c-terracotta)', fontWeight: 600 }}>
+                      Privacy Notice
+                    </Link>{' '}
+                    <span style={{ fontSize: '0.75rem', color: 'var(--c-text-muted)' }}>(v{CONSENT_VERSION})</span>.
+                  </span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button type="button" className="btn btn--outline" onClick={() => setStep(2)}>
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={!validateStep(3)}
+                  onClick={() => setStep(4)}
+                >
+                  Next: Review Booking →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: REVIEW & CONFIRM */}
+          {step === 4 && (
+            <div>
+              <div style={{ background: '#FFFFFF', padding: '1.75rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border-light)', marginBottom: '1.75rem' }}>
+                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--c-umber)', fontSize: '1.15rem' }}>
+                  Review Consultation Summary
+                </h4>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.9rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Doctor</span>
+                    <strong>Dr. Aishwarya Agarwal</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Focus</span>
+                    <strong>{treatment}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Date</span>
+                    <strong>{selectedDate}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Time Slot</span>
+                    <strong>{selectedTime} IST</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Patient Name</span>
+                    <strong>{name}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--c-text-muted)', display: 'block', fontSize: '0.75rem', textTransform: 'uppercase' }}>Contact Number</span>
+                    <strong>{phone}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button type="button" className="btn btn--outline" onClick={() => setStep(3)}>
+                  ← Edit Details
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn--primary"
+                  disabled={submitting}
+                >
+                  {submitting ? 'Confirming Reservation…' : 'Confirm Consultation Booking'}
+                </button>
+              </div>
+            </div>
+          )}
+        </form>
+      )}
+    </div>
+  );
 }

@@ -1,6 +1,7 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
-export default function Philosophy(){
+export default function Philosophy({ preview = false }) {
   return (
     <section id="philosophy" className="section">
       <div className="container">
@@ -23,6 +24,11 @@ export default function Philosophy(){
             <p className="pillar-card__text">Balancing clinical precision with natural aesthetics for results that feel authentically you.</p>
           </div>
         </div>
+        {preview && (
+          <div style={{textAlign:'center', marginTop:'2.5rem'}}>
+            <Link to="/about" className="btn btn--outline">View all About Our Philosophy →</Link>
+          </div>
+        )}
       </div>
     </section>
   )
