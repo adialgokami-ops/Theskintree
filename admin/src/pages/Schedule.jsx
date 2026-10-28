@@ -15,9 +15,11 @@ function getTodayStr() {
 export default function Schedule() {
   const { authFetch, staff } = useAuth()
 
-  const [viewMode, setViewMode] = useState('day') // 'day' or 'week'
+  const [viewMode, setViewMode] = useState('day') // 'day', 'week', or 'pending'
   const [selectedDate, setSelectedDate] = useState(getTodayStr())
   const [scheduleData, setScheduleData] = useState({ days: [], bookings: [], blocks: [] })
+  const [pendingBookings, setPendingBookings] = useState([])
+  const [pendingCount, setPendingCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -49,12 +51,23 @@ export default function Schedule() {
   const loadSchedule = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const daysCount = viewMode === 'week' ? 7 : 1
     try {
-      const res = await authFetch(`/api/schedule?from=${selectedDate}&days=${daysCount}`)
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to load schedule.')
-      setScheduleData(data)
+      if (viewMode === 'pending') {
+        const res = await authFetch('/api/schedule?pending=1')
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to load pending queue.')
+        setPendingBookings(data.bookings || [])
+        setPendingCount(data.pendingCount !== undefined ? data.pendingCount : (data.bookings || []).length)
+      } else {
+        const daysCount = viewMode === 'week' ? 7 : 1
+        const res = await authFetch(`/api/schedule?from=${selectedDate}&days=${daysCount}`)
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to load schedule.')
+        setScheduleData(data)
+        if (data.pendingCount !== undefined) {
+          setPendingCount(data.pendingCount)
+        }
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -114,12 +127,14 @@ export default function Schedule() {
   }
 
   // Handle Booking Status Update
-  const handleUpdateStatus = async (bookingId, newStatus) => {
+  const handleUpdateStatus = async (bookingId, newStatus, reason = null) => {
     setActionLoading(true)
     try {
+      const body = { status: newStatus }
+      if (reason) body.cancellation_reason = reason
       const res = await authFetch(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify(body)
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to update status.')
@@ -132,6 +147,17 @@ export default function Schedule() {
     } finally {
       setActionLoading(false)
     }
+  }
+
+  // Handle Booking Cancellation with Mandatory Reason
+  const handleCancelWithReason = async (bookingId) => {
+    const reason = window.prompt('Please enter the reason for cancellation (e.g., Patient unreachable, requested cancellation, duplicate request):')
+    if (reason === null) return // Cancelled prompt
+    if (!reason.trim()) {
+      alert('Cancellation reason is required.')
+      return
+    }
+    await handleUpdateStatus(bookingId, 'cancelled', reason.trim())
   }
 
   // Handle Staff Notes Update
@@ -254,41 +280,79 @@ export default function Schedule() {
             >
               Week
             </button>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button type="button" className="btn-secondary" onClick={() => setSelectedDate(getTodayStr())}>
-            Today
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--color-border)', borderRadius: '6px', background: '#FFFFFF' }}>
-            <button type="button" onClick={handlePrev} style={{ padding: '0.5rem 0.8rem', fontSize: '1rem' }}>
-              ‹
-            </button>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              style={{ border: 'none', padding: '0.5rem 0.5rem', fontSize: '0.9rem', outline: 'none' }}
-            />
-            <button type="button" onClick={handleNext} style={{ padding: '0.5rem 0.8rem', fontSize: '1rem' }}>
-              ›
-            </button>
-          </div>
-
-          {['admin', 'doctor'].includes(staff?.role) && (
             <button
               type="button"
-              className="btn-primary"
-              onClick={() => {
-                setBlockDate(selectedDate)
-                setBlockModal(true)
+              onClick={() => setViewMode('pending')}
+              style={{
+                padding: '0.35rem 0.85rem',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                borderRadius: '4px',
+                background: viewMode === 'pending' ? '#FFFFFF' : 'transparent',
+                color: viewMode === 'pending' ? 'var(--color-forest)' : '#718096',
+                boxShadow: viewMode === 'pending' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
               }}
             >
-              🚫 Block Slot / Day
+              <span>Pending Queue</span>
+              {pendingCount > 0 && (
+                <span style={{
+                  background: 'var(--color-gold, #D97706)',
+                  color: '#FFFFFF',
+                  fontSize: '0.7rem',
+                  padding: '1px 6px',
+                  borderRadius: '999px',
+                  fontWeight: 700
+                }}>
+                  {pendingCount}
+                </span>
+              )}
             </button>
-          )}
+          </div>
         </div>
+
+        {viewMode !== 'pending' ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button type="button" className="btn-secondary" onClick={() => setSelectedDate(getTodayStr())}>
+              Today
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--color-border)', borderRadius: '6px', background: '#FFFFFF' }}>
+              <button type="button" onClick={handlePrev} style={{ padding: '0.5rem 0.8rem', fontSize: '1rem' }}>
+                ‹
+              </button>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{ border: 'none', padding: '0.5rem 0.5rem', fontSize: '0.9rem', outline: 'none' }}
+              />
+              <button type="button" onClick={handleNext} style={{ padding: '0.5rem 0.8rem', fontSize: '1rem' }}>
+                ›
+              </button>
+            </div>
+
+            {['admin', 'doctor'].includes(staff?.role) && (
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setBlockDate(selectedDate)
+                  setBlockModal(true)
+                }}
+              >
+                🚫 Block Slot / Day
+              </button>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button type="button" className="btn-secondary" onClick={loadSchedule} disabled={loading}>
+              🔄 Refresh Queue
+            </button>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -300,6 +364,101 @@ export default function Schedule() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--color-text-muted)' }}>
           Loading schedule...
+        </div>
+      ) : viewMode === 'pending' ? (
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.25rem', color: 'var(--color-forest)', marginBottom: '4px' }}>
+              Pending Confirmation Queue
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+              Appointments requested via website or chat. Call or WhatsApp the patient to confirm availability before confirming.
+            </p>
+          </div>
+
+          {pendingBookings.length === 0 ? (
+            <div className="admin-card" style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--color-text-muted)' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✅</div>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-forest)', marginBottom: '0.25rem' }}>All Caught Up</h3>
+              <p style={{ fontSize: '0.85rem' }}>There are no pending booking requests waiting for confirmation.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {pendingBookings.map((b) => (
+                <div key={b.id} className="admin-card" style={{ padding: '1.25rem', borderLeft: '4px solid var(--color-gold, #D97706)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ flex: 1, minWidth: '260px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                        <span className="status-pill pending" style={{ background: '#FEF3C7', color: '#92400E', fontWeight: 600 }}>
+                          Pending Confirmation
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: '#718096' }}>
+                          Source: <code>{b.source}</code>
+                        </span>
+                      </div>
+                      <h3 style={{ fontSize: '1.15rem', color: 'var(--color-forest)', marginBottom: '4px' }}>
+                        <Link to={`/patients/${b.patient_ref}`} style={{ textDecoration: 'underline' }}>
+                          {b.contacts?.full_name || 'Patient'}
+                        </Link>
+                      </h3>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#2D3748', marginBottom: '6px' }}>
+                        {b.treatment}
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: '#4A5568', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                        <span>📅 <strong>{b.slot_date}</strong> at <strong>{b.slot_time}</strong></span>
+                        <span>📞 <a href={`tel:${b.contacts?.phone}`} style={{ color: 'var(--color-forest)', textDecoration: 'underline' }}>{b.contacts?.phone}</a></span>
+                        {b.contacts?.email && <span>✉️ {b.contacts?.email}</span>}
+                      </div>
+                      {b.notes && (
+                        <div style={{ marginTop: '8px', fontSize: '0.8rem', background: '#F7FAFC', padding: '6px 10px', borderRadius: '4px', border: '1px solid #EDF2F7' }}>
+                          <strong>Patient Notes:</strong> {b.notes}
+                        </div>
+                      )}
+                      {b.staff_notes && (
+                        <div style={{ marginTop: '6px', fontSize: '0.8rem', color: '#4A5568' }}>
+                          <strong>Staff Notes:</strong> {b.staff_notes}
+                        </div>
+                      )}
+                      <div style={{ fontSize: '0.75rem', color: '#A0AEC0', marginTop: '6px' }}>
+                        Requested on: {new Date(b.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '160px' }}>
+                      <a
+                        href={`https://wa.me/${(b.contacts?.phone || '').replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-secondary"
+                        style={{ textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem', padding: '0.4rem 0.75rem', background: '#25D366', color: '#FFFFFF', borderColor: '#25D366' }}
+                      >
+                        💬 WhatsApp
+                      </a>
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}
+                        onClick={() => handleUpdateStatus(b.id, 'confirmed')}
+                        disabled={actionLoading}
+                      >
+                        ✓ Confirm Booking
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        style={{ justifyContent: 'center', fontSize: '0.8rem', padding: '0.4rem 0.75rem', color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
+                        onClick={() => handleCancelWithReason(b.id)}
+                        disabled={actionLoading}
+                      >
+                        ✕ Cancel Request
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${scheduleData.days?.length || 1}, minmax(280px, 1fr))`, gap: '1.25rem' }}>
@@ -563,6 +722,47 @@ export default function Schedule() {
               </div>
             </div>
 
+            {/* Pending Confirmation Callout */}
+            {bookingDetailModal.status === 'pending' && (
+              <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', padding: '0.85rem', borderRadius: '6px', marginBottom: '1.25rem' }}>
+                <div style={{ fontWeight: 600, color: '#92400E', fontSize: '0.85rem', marginBottom: '4px' }}>
+                  ⚠️ Pending Reception Confirmation
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#78350F', marginBottom: '8px' }}>
+                  This booking is awaiting telephone or WhatsApp verification with the patient.
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <a
+                    href={`https://wa.me/${(bookingDetailModal.contacts?.phone || '').replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary"
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', background: '#25D366', color: '#FFFFFF', borderColor: '#25D366' }}
+                  >
+                    💬 WhatsApp Patient
+                  </a>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+                    onClick={() => handleUpdateStatus(bookingDetailModal.id, 'confirmed')}
+                    disabled={actionLoading}
+                  >
+                    ✓ Confirm Booking
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
+                    onClick={() => handleCancelWithReason(bookingDetailModal.id)}
+                    disabled={actionLoading}
+                  >
+                    ✕ Cancel with Reason
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Quick Status Buttons */}
             <div style={{ marginBottom: '1.5rem' }}>
               <label className="form-label">Update Status:</label>
@@ -579,7 +779,7 @@ export default function Schedule() {
                       borderColor: bookingDetailModal.status === st ? 'var(--color-forest)' : 'var(--color-border)',
                       fontWeight: bookingDetailModal.status === st ? 700 : 500
                     }}
-                    onClick={() => handleUpdateStatus(bookingDetailModal.id, st)}
+                    onClick={() => st === 'cancelled' ? handleCancelWithReason(bookingDetailModal.id) : handleUpdateStatus(bookingDetailModal.id, st)}
                     disabled={actionLoading}
                   >
                     Mark {st.replace('_', ' ')}

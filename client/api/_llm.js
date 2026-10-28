@@ -17,7 +17,7 @@
  * - Quota & 429 Logging:
  *   - Logs the full 429 response body and headers with API keys strictly redacted.
  * - Resilience:
- *   - In case of failure, streams a polite concierge message with clinic WhatsApp (+91 98200 12345)
+ *   - In case of failure, streams a polite concierge message with clinic WhatsApp (CLINIC_WHATSAPP)
  *     and marks success: false (canned fallback).
  */
 
@@ -186,7 +186,7 @@ export async function streamChat({ system, messages, signal, onToken, onStatus, 
   if (!secondaryApiKey) {
     console.warn('[LLM Adapter] GEMINI_API_KEY_2 is not set; running single-key Gemini without second-key hedging.');
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7500);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const onParentAbort = () => controller.abort();
     if (signal) signal.addEventListener('abort', onParentAbort);
@@ -331,7 +331,7 @@ export async function streamChat({ system, messages, signal, onToken, onStatus, 
   const maxBudgetTimer = setTimeout(() => {
     primaryController.abort();
     secondaryController.abort();
-  }, 7500);
+  }, 10000);
 
   try {
     await Promise.race([
@@ -399,9 +399,14 @@ function handleFatalFallback(err, primaryModel, onToken, primaryError = null, se
     })
   );
 
-  // Friendly canned message including clinic WhatsApp / Phone: +91 98200 12345
-  const friendlyFallback =
-    'Hello! Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or reach our clinic directly on WhatsApp or call at +91 98200 12345.';
+  // Friendly canned message reading CLINIC_WHATSAPP from env
+  const waNum = process.env.CLINIC_WHATSAPP;
+  if (!waNum) {
+    console.error('🚨 [CRITICAL CONFIG WARNING] CLINIC_WHATSAPP environment variable is not configured!');
+  }
+  const friendlyFallback = waNum
+    ? `Hello! Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or reach our clinic directly on WhatsApp at ${waNum}.`
+    : 'Hello! Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or contact our clinic concierge.';
   onToken(friendlyFallback);
 
   return {

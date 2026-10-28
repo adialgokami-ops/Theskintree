@@ -1,8 +1,11 @@
 import React from 'react'
 import PageHeader from '../components/PageHeader'
 import Booking from '../components/Booking'
+import { getClinicWhatsApp } from '../lib/config.js'
 
 export default function Contact() {
+  const clinicWhatsApp = getClinicWhatsApp()
+  const cleanWa = clinicWhatsApp ? clinicWhatsApp.replace(/\D/g, '') : ''
   return (
     <div className="page-contact">
       <PageHeader
@@ -33,31 +36,35 @@ export default function Contact() {
                   </div>
                 </div>
 
-                <div style={{display: 'flex', gap: '1rem', alignItems: 'flex-start'}}>
-                  <div style={{fontSize: '1.5rem', color: 'var(--c-terracotta)'}}>📞</div>
-                  <div>
-                    <strong style={{display: 'block', color: 'var(--c-text-primary)', marginBottom: 2}}>Telephone</strong>
-                    <a href="tel:+919876543210" style={{color: 'var(--c-terracotta)', fontWeight: 600, textDecoration: 'none'}}>
-                      +91 98765 43210
-                    </a>
-                  </div>
-                </div>
+                {clinicWhatsApp ? (
+                  <>
+                    <div style={{display: 'flex', gap: '1rem', alignItems: 'flex-start'}}>
+                      <div style={{fontSize: '1.5rem', color: 'var(--c-terracotta)'}}>📞</div>
+                      <div>
+                        <strong style={{display: 'block', color: 'var(--c-text-primary)', marginBottom: 2}}>Telephone</strong>
+                        <a href={`tel:${clinicWhatsApp.replace(/\s+/g, '')}`} style={{color: 'var(--c-terracotta)', fontWeight: 600, textDecoration: 'none'}}>
+                          {clinicWhatsApp}
+                        </a>
+                      </div>
+                    </div>
 
-                <div style={{display: 'flex', gap: '1rem', alignItems: 'flex-start'}}>
-                  <div style={{fontSize: '1.5rem', color: 'var(--c-terracotta)'}}>💬</div>
-                  <div>
-                    <strong style={{display: 'block', color: 'var(--c-text-primary)', marginBottom: 2}}>WhatsApp Concierge</strong>
-                    <a
-                      href="https://wa.me/919876543210?text=Hello%20The%20Skin%20Tree,%20I%20would%20like%20to%20inquire%20about%20a%20consultation"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn--outline btn--sm"
-                      style={{marginTop: 6, display: 'inline-flex'}}
-                    >
-                      Chat on WhatsApp →
-                    </a>
-                  </div>
-                </div>
+                    <div style={{display: 'flex', gap: '1rem', alignItems: 'flex-start'}}>
+                      <div style={{fontSize: '1.5rem', color: 'var(--c-terracotta)'}}>💬</div>
+                      <div>
+                        <strong style={{display: 'block', color: 'var(--c-text-primary)', marginBottom: 2}}>WhatsApp Concierge</strong>
+                        <a
+                          href={`https://wa.me/${cleanWa}?text=Hello%20The%20Skin%20Tree,%20I%20would%20like%20to%20inquire%20about%20a%20consultation`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn--outline btn--sm"
+                          style={{marginTop: 6, display: 'inline-flex'}}
+                        >
+                          Chat on WhatsApp →
+                        </a>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
 
                 <div style={{display: 'flex', gap: '1rem', alignItems: 'flex-start'}}>
                   <div style={{fontSize: '1.5rem', color: 'var(--c-terracotta)'}}>🕒</div>

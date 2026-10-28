@@ -49,7 +49,7 @@ function BeforeAfter({ before, after, alt = 'Before/After', preview = false }) {
           <h2>Real Results</h2>
           <p>Authentic, privacy-compliant before & after results from consenting patients.</p>
         </div>
-        <div className="before-after-row" style={{display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '2rem', alignItems: 'start'}}>
+        <div className="before-after-row">
           <div>
             <div className="before-after-slider" ref={containerRef} style={{aspectRatio: '16/9'}}>
               <img className="ba-img ba-before" src={before} alt={alt} />

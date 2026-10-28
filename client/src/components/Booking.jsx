@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useSearchParams, Link } from 'react-router-dom';
 import { TREATMENTS, normalisePhone, validateName, validateEmail, validateNotes } from '@theskintree/shared';
+import { getClinicWhatsApp } from '../lib/config.js';
 
 export const CONSENT_VERSION = '2026.1-dpdp';
 // Derived as SHA-256 of canonical displayed consent text:
 // "I consent to The Skin Tree processing my contact details for appointment scheduling in accordance with the Privacy Notice (v2026.1-dpdp)."
 export const CONSENT_HASH = '6f242e4212e81cfb7a2e1bbeee7bd7aecb4a7711862edb3214ecd0487fc348d0';
 
-// Interim Configuration: Set true when SMS gateway DLT registration completes
-const REQUIRE_PHONE_OTP = false;
-
 export default function Booking({ hideHeader = false }) {
+  const clinicWhatsApp = getClinicWhatsApp();
   const [step, setStep] = useState(1);
   const [treatment, setTreatment] = useState('Consultation');
   const [selectedDate, setSelectedDate] = useState('');
@@ -26,16 +25,10 @@ export default function Booking({ hideHeader = false }) {
   const [turnstileToken, setTurnstileToken] = useState('');
   const turnstileContainerRef = useRef(null);
 
-  // Security: Phone OTP verification state
-  const [otpCode, setOtpCode] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [otpError, setOtpError] = useState(null);
-
   // Slots fetching and refresh state
   const [days, setDays] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotsError, setSlotsError] = useState(false);
   const [slotDisappearedMsg, setSlotDisappearedMsg] = useState('');
 
   // Form submission state
@@ -66,11 +59,16 @@ export default function Booking({ hideHeader = false }) {
   // Fetch slots from API
   const fetchSlots = useCallback(async (isBackground = false) => {
     if (!isBackground) setLoadingSlots(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
     try {
-      const res = await fetch('/api/slots?days=14');
+      const res = await fetch('/api/slots?days=14', { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error('Slots service unavailable');
       const data = await res.json();
-      if (res.ok && Array.isArray(data.days)) {
+      if (Array.isArray(data.days)) {
         setDays(data.days);
+        setSlotsError(false);
 
         // Auto-select first available date if none selected
         if (!selectedDate) {
@@ -92,7 +90,9 @@ export default function Booking({ hideHeader = false }) {
       }
     } catch (err) {
       console.warn('Slot fetch issue:', err);
+      if (!isBackground) setSlotsError(true);
     } finally {
+      clearTimeout(timeout);
       if (!isBackground) setLoadingSlots(false);
     }
   }, [selectedDate, selectedTime]);
@@ -130,18 +130,25 @@ export default function Booking({ hideHeader = false }) {
     setSlotDisappearedMsg('');
 
     setLoadingSlots(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
     try {
-      const res = await fetch(`/api/slots?date=${newDate}`);
+      const res = await fetch(`/api/slots?date=${newDate}`, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error('Slots fetch failed');
       const data = await res.json();
-      if (res.ok && Array.isArray(data.days)) {
+      if (Array.isArray(data.days) && data.days.length > 0) {
         // Merge or replace day in list
         setDays(prev => {
           const existing = prev.filter(d => d.date !== newDate);
           return [...existing, data.days[0]].sort((a, b) => a.date.localeCompare(b.date));
         });
+        setSlotsError(false);
       }
     } catch (_) {
+      setSlotsError(true);
     } finally {
+      clearTimeout(timeout);
       setLoadingSlots(false);
     }
   };
@@ -168,17 +175,13 @@ export default function Booking({ hideHeader = false }) {
       return Boolean(selectedDate && selectedTime);
     }
     if (s === 3) {
-      const basicValid = (
+      return (
         validateName(name) &&
         Boolean(normalisePhone(phone)) &&
         validateEmail(email) &&
         validateNotes(notes) &&
         consent
       );
-      if (REQUIRE_PHONE_OTP) {
-        return basicValid && otpVerified;
-      }
-      return basicValid;
     }
     return true;
   };
@@ -203,7 +206,6 @@ export default function Booking({ hideHeader = false }) {
       consentVersion: CONSENT_VERSION,
       consentTextHash: CONSENT_HASH,
       turnstileToken: turnstileToken || 'interim-client-token',
-      otpCode: REQUIRE_PHONE_OTP ? otpCode : undefined,
       idempotencyKey: idempotencyKeyRef.current,
       website: honeypot // Anti-bot honeypot
     };
@@ -349,12 +351,12 @@ export default function Booking({ hideHeader = false }) {
       {bookingSuccess ? (
         <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌿</div>
-          <span className="eyebrow" style={{ color: 'var(--c-terracotta)' }}>Reservation Confirmed</span>
-          <h3 style={{ fontSize: 'var(--fs-2xl)', color: 'var(--c-umber)', margin: '0.5rem 0 1rem' }}>
-            We Look Forward to Welcoming You
+          <span className="eyebrow" style={{ color: 'var(--c-terracotta)' }}>Request Received</span>
+          <h3 style={{ fontSize: 'var(--fs-2xl)', color: 'var(--c-umber)', margin: '0.5rem 0 1rem', maxWidth: '580px', marginLeft: 'auto', marginRight: 'auto' }}>
+            Request received. This is not confirmed yet. Our team will call or WhatsApp you to confirm.
           </h3>
           <p style={{ color: 'var(--c-text-primary)', fontSize: '1rem', lineHeight: 1.6, maxWidth: '520px', margin: '0 auto 1.5rem' }}>
-            Dear <strong>{bookingSuccess.name}</strong>, your consultation appointment with <strong>Dr. Aishwarya Agarwal</strong> for <strong>{bookingSuccess.treatment}</strong> has been successfully registered for <strong>{bookingSuccess.date}</strong> at <strong>{bookingSuccess.time} IST</strong>.
+            Dear <strong>{bookingSuccess.name}</strong>, your consultation appointment request with <strong>Dr. Aishwarya Agarwal</strong> for <strong>{bookingSuccess.treatment}</strong> has been received for <strong>{bookingSuccess.date}</strong> at <strong>{bookingSuccess.time} IST</strong>.
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '2rem' }}>
@@ -365,14 +367,16 @@ export default function Booking({ hideHeader = false }) {
             >
               📅 Add to Calendar (.ics)
             </button>
-            <a
-              href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hello The Skin Tree, I have reserved appointment #${bookingSuccess.id.slice(0, 8)} on ${bookingSuccess.date} at ${bookingSuccess.time}.`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn--outline"
-            >
-              💬 WhatsApp Concierge
-            </a>
+            {clinicWhatsApp ? (
+              <a
+                href={`https://wa.me/${clinicWhatsApp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello The Skin Tree, I have submitted consultation request #${bookingSuccess.id.slice(0, 8)} for ${bookingSuccess.date} at ${bookingSuccess.time}.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn--outline"
+              >
+                💬 WhatsApp Concierge
+              </a>
+            ) : null}
           </div>
 
           <div style={{ background: 'rgba(255,255,255,0.7)', padding: '14px 18px', borderRadius: '12px', maxWidth: '480px', margin: '0 auto', fontSize: '0.85rem', color: 'var(--c-text-secondary)' }}>
@@ -449,7 +453,7 @@ export default function Booking({ hideHeader = false }) {
               )}
 
               {/* DateStrip: 14 Days */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '8px' }}>
                 <label style={{ fontWeight: 600, color: 'var(--c-text-primary)', fontSize: '0.9rem' }}>
                   Select Consultation Date (Next 14 Days):
                 </label>
@@ -470,65 +474,102 @@ export default function Booking({ hideHeader = false }) {
                 </div>
               </div>
 
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                overflowX: 'auto',
-                paddingBottom: '12px',
-                marginBottom: '1.5rem'
-              }}>
-                {loadingSlots && days.length === 0 ? (
-                  // Skeleton loader
-                  Array.from({ length: 7 }).map((_, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        flex: '0 0 74px',
-                        height: '70px',
-                        background: 'rgba(212, 184, 150, 0.3)',
-                        borderRadius: '10px',
-                        animation: 'pulse 1.5s infinite'
-                      }}
-                    />
-                  ))
-                ) : (
-                  days.map(d => {
-                    const isClosed = d.closed || d.availableCount === 0;
-                    const isSelected = selectedDate === d.date;
-                    const dateObj = new Date(d.date + 'T00:00:00Z');
-                    const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
-                    const dayNum = d.date.slice(8);
-
-                    return (
-                      <button
-                        key={d.date}
-                        type="button"
-                        disabled={isClosed}
-                        onClick={() => { setSelectedDate(d.date); setSelectedTime(''); setSlotDisappearedMsg(''); }}
+              {slotsError && days.length === 0 ? (
+                <div style={{
+                  padding: '1.25rem',
+                  borderRadius: '12px',
+                  background: '#FFF5EB',
+                  border: '1px solid rgba(184, 93, 58, 0.25)',
+                  textAlign: 'center',
+                  marginBottom: '1.5rem'
+                }}>
+                  <p style={{ margin: '0 0 0.75rem 0', color: 'var(--c-terracotta-dark)', fontWeight: 600, fontSize: '0.9rem' }}>
+                    Calendar service is temporarily taking longer to respond.
+                  </p>
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => fetchSlots(false)}
+                      className="btn btn--primary"
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                    >
+                      🔄 Retry Loading Times
+                    </button>
+                    {clinicWhatsApp ? (
+                      <a
+                        href={`https://wa.me/${clinicWhatsApp.replace(/\D/g, '')}?text=${encodeURIComponent('Hello The Skin Tree, I would like to book an appointment with Dr. Aishwarya.')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn--outline"
+                        style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                      >
+                        💬 WhatsApp Concierge
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  paddingBottom: '12px',
+                  marginBottom: '1.5rem',
+                  WebkitOverflowScrolling: 'touch'
+                }}>
+                  {loadingSlots && days.length === 0 ? (
+                    // Skeleton loader
+                    Array.from({ length: 7 }).map((_, i) => (
+                      <div
+                        key={i}
                         style={{
                           flex: '0 0 74px',
-                          padding: '8px 4px',
+                          height: '70px',
+                          background: 'rgba(212, 184, 150, 0.3)',
                           borderRadius: '10px',
-                          border: '1.5px solid',
-                          borderColor: isSelected ? 'var(--c-terracotta)' : isClosed ? 'rgba(212, 184, 150, 0.3)' : 'var(--c-border)',
-                          background: isSelected ? 'var(--c-terracotta)' : isClosed ? 'rgba(239, 221, 206, 0.4)' : '#FFFFFF',
-                          color: isSelected ? '#FFFFFF' : isClosed ? 'var(--c-text-muted)' : 'var(--c-text-primary)',
-                          cursor: isClosed ? 'not-allowed' : 'pointer',
-                          textAlign: 'center',
-                          opacity: isClosed ? 0.6 : 1,
-                          transition: 'all 0.15s ease'
+                          animation: 'pulse 1.5s infinite'
                         }}
-                      >
-                        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.8 }}>{weekday}</div>
-                        <div style={{ fontSize: '1.15rem', fontWeight: 700, margin: '2px 0' }}>{dayNum}</div>
-                        <div style={{ fontSize: '0.68rem', fontWeight: 500 }}>
-                          {d.closed ? 'Closed' : `${d.availableCount} slots`}
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
+                      />
+                    ))
+                  ) : (
+                    days.map(d => {
+                      const isClosed = d.closed || d.availableCount === 0;
+                      const isSelected = selectedDate === d.date;
+                      const dateObj = new Date(d.date + 'T00:00:00Z');
+                      const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+                      const dayNum = d.date.slice(8);
+
+                      return (
+                        <button
+                          key={d.date}
+                          type="button"
+                          disabled={isClosed}
+                          onClick={() => { setSelectedDate(d.date); setSelectedTime(''); setSlotDisappearedMsg(''); }}
+                          style={{
+                            flex: '0 0 74px',
+                            padding: '8px 4px',
+                            borderRadius: '10px',
+                            border: '1.5px solid',
+                            borderColor: isSelected ? 'var(--c-terracotta)' : isClosed ? 'rgba(212, 184, 150, 0.3)' : 'var(--c-border)',
+                            background: isSelected ? 'var(--c-terracotta)' : isClosed ? 'rgba(239, 221, 206, 0.4)' : '#FFFFFF',
+                            color: isSelected ? '#FFFFFF' : isClosed ? 'var(--c-text-muted)' : 'var(--c-text-primary)',
+                            cursor: isClosed ? 'not-allowed' : 'pointer',
+                            textAlign: 'center',
+                            opacity: isClosed ? 0.6 : 1,
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.8 }}>{weekday}</div>
+                          <div style={{ fontSize: '1.15rem', fontWeight: 700, margin: '2px 0' }}>{dayNum}</div>
+                          <div style={{ fontSize: '0.68rem', fontWeight: 500 }}>
+                            {d.closed ? 'Closed' : `${d.availableCount} slots`}
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
 
               {/* SlotGrid: Two-state design */}
               <div style={{ background: '#FFFFFF', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border-light)', marginBottom: '1.75rem' }}>
@@ -607,7 +648,7 @@ export default function Booking({ hideHeader = false }) {
           {/* STEP 3: CONTACT DETAILS & CONSENT */}
           {step === 3 && (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
                 <div>
                   <label htmlFor="b-name" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                     Full Name *
@@ -639,7 +680,7 @@ export default function Booking({ hideHeader = false }) {
                   />
                 </div>
 
-                <div style={{ gridColumn: 'span 2' }}>
+                <div style={{ gridColumn: '1 / -1' }}>
                   <label htmlFor="b-email" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                     Email Address (Optional — for calendar invite & management link)
                   </label>
@@ -653,7 +694,7 @@ export default function Booking({ hideHeader = false }) {
                   />
                 </div>
 
-                <div style={{ gridColumn: 'span 2' }}>
+                <div style={{ gridColumn: '1 / -1' }}>
                   <label htmlFor="b-notes" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                     Notes (Optional — max 500 characters)
                   </label>
@@ -671,63 +712,6 @@ export default function Booking({ hideHeader = false }) {
                   </div>
                 </div>
               </div>
-
-              {/* Phone OTP Verification (Interim configuration: active when REQUIRE_PHONE_OTP is true) */}
-              {REQUIRE_PHONE_OTP ? (
-                <div style={{ marginBottom: '1.5rem', padding: '14px 16px', background: '#FFFFFF', borderRadius: 8, border: '1px solid var(--c-border-light)' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>
-                    Phone Verification (SMS OTP)
-                  </label>
-                  {!otpSent ? (
-                    <button
-                      type="button"
-                      className="btn btn--outline"
-                      disabled={!Boolean(normalisePhone(phone)) || otpLoading}
-                      onClick={async () => {
-                        setOtpLoading(true);
-                        setOtpError(null);
-                        try {
-                          const res = await fetch('/api/otp/send', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ phone: normalisePhone(phone) })
-                          });
-                          if (!res.ok) throw new Error('Failed to send OTP code.');
-                          setOtpSent(true);
-                        } catch (err) {
-                          setOtpError(err.message);
-                        } finally {
-                          setOtpLoading(false);
-                        }
-                      }}
-                      style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                    >
-                      {otpLoading ? 'Sending...' : 'Send OTP via SMS'}
-                    </button>
-                  ) : (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <input
-                        type="text"
-                        maxLength={6}
-                        placeholder="6-digit OTP"
-                        value={otpCode}
-                        onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                        style={{ width: '130px', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--c-border)' }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn--primary"
-                        disabled={otpCode.length !== 6 || otpVerified}
-                        onClick={() => setOtpVerified(true)}
-                        style={{ padding: '8px 14px', fontSize: '0.85rem' }}
-                      >
-                        {otpVerified ? '✓ Verified' : 'Verify'}
-                      </button>
-                    </div>
-                  )}
-                  {otpError && <div style={{ color: 'var(--c-terracotta)', fontSize: '0.75rem', marginTop: 4 }}>{otpError}</div>}
-                </div>
-              ) : null}
 
               {/* AI-Processing Disclosure (DPDP Act 2023 Compliance) */}
               <div style={{ marginBottom: '1.25rem', padding: '12px 14px', background: 'rgba(184, 93, 58, 0.06)', borderRadius: 8, border: '1px solid rgba(184, 93, 58, 0.2)', fontSize: '0.8125rem', color: 'var(--c-umber)', lineHeight: 1.5 }}>
@@ -823,7 +807,7 @@ export default function Booking({ hideHeader = false }) {
                   className="btn btn--primary"
                   disabled={submitting}
                 >
-                  {submitting ? 'Confirming Reservation…' : 'Confirm Consultation Booking'}
+                  {submitting ? 'Submitting Request…' : 'Submit Consultation Request'}
                 </button>
               </div>
             </div>

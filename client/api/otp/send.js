@@ -61,10 +61,15 @@ export default async function handler(req, res) {
   const hasSmsGateway = Boolean(process.env.MSG91_AUTH_KEY || process.env.SMS_API_KEY);
   if (!hasSmsGateway && process.env.NODE_ENV === 'production') {
     // Fail CLOSED in production if SMS infrastructure is not yet provisioned
+    const waNum = process.env.CLINIC_WHATSAPP;
+    if (!waNum) {
+      console.error('🚨 [CRITICAL CONFIG WARNING] CLINIC_WHATSAPP environment variable is not configured!');
+    }
+    const reachOut = waNum ? `on WhatsApp at ${waNum}.` : 'directly to our clinic concierge.';
     return res.status(503).json({
       ok: false,
       code: 'sms_service_unavailable',
-      error: 'SMS verification is temporarily undergoing telecom gateway registration. Please reach out on WhatsApp at +91 98200 12345.'
+      error: `SMS verification is temporarily undergoing telecom gateway registration. Please reach out ${reachOut}`
     });
   }
 

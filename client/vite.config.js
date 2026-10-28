@@ -81,6 +81,9 @@ export default defineConfig(({ mode }) => {
   Object.assign(process.env, env)
 
   return {
+    define: {
+      'process.env.CLINIC_WHATSAPP': JSON.stringify(env.CLINIC_WHATSAPP || env.VITE_CLINIC_WHATSAPP || '')
+    },
     plugins: [react(), apiPlugin()],
     resolve: {
       alias: {

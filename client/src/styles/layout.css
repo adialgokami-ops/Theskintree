@@ -352,7 +352,25 @@
 
 @media (max-width: 1024px) {
   .section-hero::before{ background-position: center; }
-  .hero-card{ max-width: 540px; margin-inline: 0 auto; }
+  .section-hero .container {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .split-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+  .split-layout > div:first-child {
+    padding-right: 0;
+  }
+  .split-layout > div:last-child {
+    justify-self: center;
+  }
+  .hero-card {
+    max-width: 520px;
+    margin-inline: auto;
+    transform: none;
+  }
 }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(1.5rem, 3vw, 2.5rem); }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(1.5rem, 2.5vw, 2rem); }
@@ -459,6 +477,26 @@
 }
 
 @media (max-width: 768px) {
+  .section-hero {
+    padding-top: clamp(5rem, 14vw, 7.5rem);
+    padding-bottom: clamp(3.5rem, 10vw, 5rem);
+  }
+  .section-hero .display-text {
+    font-size: clamp(2.1rem, 7.5vw, 3.4rem);
+    line-height: 1.15;
+  }
+  .hero-card {
+    max-width: 100%;
+    transform: none;
+    padding: 1.25rem;
+  }
+  .hero-card .card-title {
+    font-size: 1.25rem;
+  }
+  .hero-trust {
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+  }
   .nav-logo__icon { width: 80px; height: 80px; }
   .navbar.is-scrolled .nav-logo__icon,
   .navbar--hero.is-scrolled .nav-logo__icon { width: 62px; height: 62px; }
@@ -494,6 +532,10 @@
   text-decoration:none; display:flex; align-items:center; justify-content:center;
 }
 .sticky-cta:focus{ outline: 3px solid rgba(255,255,255,0.12); }
+
+body.chat-open .sticky-cta {
+  display: none !important;
+}
 
 /* Booking form small styling */
 .form-group { margin-bottom: 0.75rem; }

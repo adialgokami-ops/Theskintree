@@ -13,6 +13,7 @@ import { sendBookingConfirmationToPatient, sendBookingNotificationToClinic } fro
 import { checkRateLimit } from './_server/lib/ratelimit.js';
 import { verifyTurnstileToken } from './_server/lib/turnstile.js';
 import { verifyOtp } from './_server/lib/otp.js';
+import { resetWebDb } from './_server/lib/db.js';
 
 // Server-side canonical consent constants
 export const SERVER_CONSENT_VERSION = '2026.1-dpdp';
@@ -85,8 +86,8 @@ export default async function handler(req, res) {
     });
   }
 
-  // 5. Per-Phone Rate Limiting (Max 3 booking requests per hour per phone)
-  const phoneRateLimit = await checkRateLimit(`booking:phone:${validation.normalisedPhone}`, { limit: 3, windowSeconds: 3600 });
+  // 5. Per-Phone Rate Limiting (Max 3 booking requests per day per phone)
+  const phoneRateLimit = await checkRateLimit(`booking:phone:${validation.normalisedPhone}`, { limit: 3, windowSeconds: 86400 });
   if (!phoneRateLimit.ok) {
     if (phoneRateLimit.failClosed) {
       return res.status(503).json({
@@ -98,7 +99,7 @@ export default async function handler(req, res) {
     return res.status(429).json({
       ok: false,
       code: 'too_many_active',
-      error: 'Too many booking attempts for this phone number. Please wait or contact the clinic directly.'
+      error: 'Daily booking limit reached for this phone number (max 3 per day). Please wait or contact the clinic directly.'
     });
   }
 
@@ -204,6 +205,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error('[API Bookings] Error creating booking:', err.message);
+    resetWebDb();
     return res.status(500).json({
       ok: false,
       code: 'generic',

@@ -137,10 +137,36 @@ export default async function handler(req, res) {
     if (path === '/schedule' && method === 'GET') {
       const { staff: currentStaff } = await requireStaff(req);
       const url = new URL(req.url, 'http://localhost');
+      const sql = getDbFor(currentStaff).booking();
+
+      // Support fetching pending queue directly
+      if (url.searchParams.get('pending') === '1') {
+        const pendingBookings = await sql`
+          select
+            b.id, b.patient_ref, b.treatment, b.slot_date, b.slot_time,
+            b.status, b.source, b.notes, b.staff_notes, b.manage_token,
+            b.reminder_sent_at, b.created_at,
+            json_build_object(
+              'full_name', c.full_name,
+              'phone', c.phone,
+              'email', c.email,
+              'reminder_consent', c.reminder_consent
+            ) as contacts
+          from booking.bookings b
+          join booking.contacts c on b.patient_ref = c.patient_ref
+          where b.status = 'pending'
+          order by b.slot_date asc, b.slot_time asc, b.created_at asc
+        `;
+        const formatted = pendingBookings.map((b) => ({
+          ...b,
+          slot_date: b.slot_date instanceof Date ? b.slot_date.toISOString().split('T')[0] : String(b.slot_date).split('T')[0],
+          slot_time: String(b.slot_time).slice(0, 5)
+        }));
+        return res.status(200).json({ bookings: formatted, pendingCount: formatted.length });
+      }
+
       const from = url.searchParams.get('from') || new Date().toISOString().split('T')[0];
       const days = parseInt(url.searchParams.get('days') || '1', 10);
-
-      const sql = getDbFor(currentStaff).booking();
 
       // 1. Live slot states via admin_get_slots
       const slotRows = await sql`
@@ -226,10 +252,18 @@ export default async function handler(req, res) {
         slot_time: bl.slot_time ? String(bl.slot_time).slice(0, 5) : null
       }));
 
+      const [pendingCountRow] = await sql`
+        select count(*)::int as count
+        from booking.bookings
+        where status = 'pending'
+      `;
+      const pendingCount = pendingCountRow?.count || 0;
+
       return res.status(200).json({
         days: Array.from(daysMap.values()),
         bookings: formattedBookings,
-        blocks: formattedBlocks
+        blocks: formattedBlocks,
+        pendingCount
       });
     }
 
@@ -280,12 +314,12 @@ export default async function handler(req, res) {
       return res.status(201).json({ ok: true, id: result.id, manage_token: result.manage_token });
     }
 
-    // PATCH /api/bookings/:id (status / staff_notes)
+    // PATCH /api/bookings/:id (status / staff_notes / cancellation_reason)
     const bookingMatch = path.match(/^\/bookings\/([a-f0-9-]+)$/i);
     if (bookingMatch && method === 'PATCH') {
       const { staff: currentStaff } = await requireStaff(req);
       const bookingId = bookingMatch[1];
-      const { status, staff_notes } = req.body || {};
+      const { status, staff_notes, cancellation_reason } = req.body || {};
 
       if (status && !['pending', 'confirmed', 'cancelled', 'completed', 'no_show'].includes(status)) {
         return res.status(400).json({ error: 'Invalid booking status.' });
@@ -294,25 +328,52 @@ export default async function handler(req, res) {
       const sql = getDbFor(currentStaff).booking();
 
       try {
-        const [updatedBooking] = await sql`
-          update booking.bookings set
-            status = coalesce(${status || null}, status),
-            staff_notes = case when ${staff_notes !== undefined} then ${staff_notes} else staff_notes end,
-            updated_at = now()
-          where id = ${bookingId}
-          returning *
-        `;
+        let updatedBooking;
+        try {
+          [updatedBooking] = await sql`
+            update booking.bookings set
+              status = coalesce(${status || null}, status),
+              staff_notes = case when ${staff_notes !== undefined} then ${staff_notes} else staff_notes end,
+              cancellation_reason = coalesce(${cancellation_reason || null}, cancellation_reason),
+              updated_at = now()
+            where id = ${bookingId}
+            returning *
+          `;
+        } catch (colErr) {
+          if (colErr.code === '42703') { // undefined_column if live DB lacks cancellation_reason
+            [updatedBooking] = await sql`
+              update booking.bookings set
+                status = coalesce(${status || null}, status),
+                staff_notes = case
+                  when ${staff_notes !== undefined} then ${staff_notes}
+                  when ${cancellation_reason !== undefined && cancellation_reason !== null} then coalesce(staff_notes || E'\n', '') || 'Cancellation reason: ' || ${cancellation_reason}
+                  else staff_notes
+                end,
+                updated_at = now()
+              where id = ${bookingId}
+              returning *
+            `;
+          } else {
+            throw colErr;
+          }
+        }
 
         if (!updatedBooking) {
           return res.status(404).json({ error: 'Booking not found.' });
         }
 
+        const auditAction = status === 'confirmed'
+          ? 'BOOKING_CONFIRM'
+          : status === 'cancelled'
+          ? 'BOOKING_CANCEL'
+          : 'BOOKING_UPDATE';
+
         await logBookingAudit({
           staffId: currentStaff.user_id,
-          action: 'BOOKING_UPDATE',
+          action: auditAction,
           targetType: 'bookings',
           targetId: bookingId,
-          details: { status, staff_notes }
+          details: { status, staff_notes, cancellation_reason }
         });
 
         return res.status(200).json({ booking: updatedBooking });

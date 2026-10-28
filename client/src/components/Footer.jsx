@@ -1,7 +1,11 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { getClinicWhatsApp } from '../lib/config.js'
 
 export default function Footer() {
+  const waNum = getClinicWhatsApp()
+  const waHref = waNum ? `https://wa.me/${waNum.replace(/\D/g, '')}` : '#'
+
   return (
     <footer className="footer">
       <div className="container footer__inner">
@@ -11,7 +15,9 @@ export default function Footer() {
           <div className="footer__socials">
             <a className="footer__social-link" href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">IG</a>
             <a className="footer__social-link" href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">FB</a>
-            <a className="footer__social-link" href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">WA</a>
+            {waNum && (
+              <a className="footer__social-link" href={waHref} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">WA</a>
+            )}
           </div>
         </div>
         <div>

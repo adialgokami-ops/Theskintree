@@ -4,4 +4,4 @@
  * Hard Rule 2 & 8: client/ must contain NO other database URL and NO Supabase keys.
  */
 
-export { getWebDb, default } from '../../_db.js';
+export { getWebDb, resetWebDb, default } from '../../_db.js';

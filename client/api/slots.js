@@ -8,7 +8,7 @@
 
 import { fetchSlotsRange } from './_server/lib/bookings.js';
 import { checkRateLimit } from './_server/lib/ratelimit.js';
-import { getWebDb } from './_server/lib/db.js';
+import { getWebDb, resetWebDb } from './_server/lib/db.js';
 
 export default async function handler(req, res) {
   res.setHeader('Referrer-Policy', 'no-referrer');
@@ -75,7 +75,9 @@ export default async function handler(req, res) {
     return res.status(200).json(result);
   } catch (err) {
     console.error('[API Slots] Error fetching slots:', err.message);
-    return res.status(500).json({
+    resetWebDb();
+    return res.status(503).json({
+      ok: false,
       error: 'Failed to retrieve slot availability. Please try again.'
     });
   }

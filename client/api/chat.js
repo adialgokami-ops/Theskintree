@@ -68,7 +68,11 @@ async function getCachedSlotSummary(todayIst, bypass = false) {
   }
 
   try {
-    const rangeData = await fetchSlotsRange(todayIst, 4);
+    const rangePromise = fetchSlotsRange(todayIst, 4);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Slot prefetch timeout (1500ms)')), 1500)
+    );
+    const rangeData = await Promise.race([rangePromise, timeoutPromise]);
     const days = (rangeData.days || []).filter((d) => !d.closed);
     const summaryLines = days.map((d) => {
       const openTimes = (d.slots || []).filter((s) => s.available).map((s) => s.time);
@@ -89,7 +93,7 @@ async function getCachedSlotSummary(todayIst, bypass = false) {
   } catch (err) {
     console.warn('[SlotCache] Error refreshing slots:', err.message);
     return {
-      summary: slotCache.summary || 'Mon-Sat 09:00 to 16:00 (closed Sundays).',
+      summary: slotCache.summary || 'Mon-Sat 09:00 to 16:00 (closed Sundays). Consultation slots offered daily at 09:00, 10:00, 11:30, 13:00, 14:30, 16:00 IST.',
       timings: { connect_ms: 0, query_ms: 0, query_count: 0, total_db_ms: 0 },
       cacheHit: false
     };
@@ -220,16 +224,20 @@ export default async function handler(req, res) {
     res.write(`event: status\ndata: ${JSON.stringify({ status: "Connecting with Dr. Aishwarya's team..." })}\n\n`);
   }
 
-  const slotResult = slotSummaryPromise
-    ? await slotSummaryPromise
-    : await getCachedSlotSummary(todayIst, bypassCache);
-
-  const slotSummary = slotResult.summary;
-  stages.slot_cache_hit = slotResult.cacheHit;
-  stages.db_connect_ms = slotResult.timings?.connect_ms || 0;
-  stages.db_query_ms = slotResult.timings?.query_ms || 0;
-  stages.db_query_count = slotResult.timings?.query_count || 0;
-  stages.db_ms = slotResult.timings?.total_db_ms || 0;
+  let slotSummary = 'Mon-Sat 09:00 to 16:00 (closed Sundays). Available consultation slots offered daily at 09:00, 10:00, 11:30, 13:00, 14:30, 16:00 IST.';
+  if (intent.isAvailability || intent.isBookingAction) {
+    const slotResult = await (slotSummaryPromise || getCachedSlotSummary(todayIst, bypassCache));
+    slotSummary = slotResult.summary;
+    stages.slot_cache_hit = slotResult.cacheHit;
+    stages.db_connect_ms = slotResult.timings?.connect_ms || 0;
+    stages.db_query_ms = slotResult.timings?.query_ms || 0;
+    stages.db_query_count = slotResult.timings?.query_count || 0;
+    stages.db_ms = slotResult.timings?.total_db_ms || 0;
+  } else if (slotCache.data && Date.now() < slotCache.expiresAt) {
+    // Opportunistically inject warm cache without querying database
+    slotSummary = slotCache.summary;
+    stages.slot_cache_hit = true;
+  }
 
   const systemInstructionText = `Today's date in IST is ${todayIst}. You represent Dr. Aishwarya's Team at The Skin Tree luxury dermatology sanctuary in Bandra West, Mumbai, founded by lead dermatologist Dr. Aishwarya Agarwal (MBBS, MD Dermatology).
 

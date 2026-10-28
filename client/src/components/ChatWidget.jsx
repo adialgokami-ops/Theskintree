@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { getClinicWhatsApp } from '../lib/config.js'
 
 const SUGGESTIONS = [
   '🌿 Acne & breakouts',
@@ -36,6 +37,7 @@ export default function ChatWidget() {
   const [selectedDate, setSelectedDate] = useState(getTomorrowStr())
   const [dynamicSlots, setDynamicSlots] = useState([])
   const [slotsLoading, setSlotsLoading] = useState(false)
+  const [slotsError, setSlotsError] = useState(null)
   const [manualSlotPicker, setManualSlotPicker] = useState(false)
   const [slotSelected, setSlotSelected] = useState(false)
   const [messages, setMessages] = useState([
@@ -50,13 +52,32 @@ export default function ChatWidget() {
   const inputRef = useRef(null)
   const quickDays = useMemo(() => getQuickDays(), [])
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('chat-open')
+    } else {
+      document.body.classList.remove('chat-open')
+    }
+    return () => {
+      document.body.classList.remove('chat-open')
+    }
+  }, [isOpen])
+
   // Fetch slots whenever selectedDate changes if picker is active
   useEffect(() => {
     if (!selectedDate) return
     let active = true
     setSlotsLoading(true)
-    fetch(`/api/slots?from=${selectedDate}&days=1`)
-      .then((r) => r.json())
+    setSlotsError(null)
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 6000)
+
+    fetch(`/api/slots?from=${selectedDate}&days=1`, { signal: controller.signal })
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
       .then((data) => {
         if (!active) return
         const day = data.days?.[0]
@@ -68,14 +89,20 @@ export default function ChatWidget() {
       })
       .catch((err) => {
         console.error('Failed to load slots for chat picker:', err)
-        if (active) setDynamicSlots([])
+        if (active) {
+          setDynamicSlots([])
+          setSlotsError(err.name === 'AbortError' ? 'timeout' : 'error')
+        }
       })
       .finally(() => {
+        clearTimeout(timeoutId)
         if (active) setSlotsLoading(false)
       })
 
     return () => {
       active = false
+      controller.abort()
+      clearTimeout(timeoutId)
     }
   }, [selectedDate])
 
@@ -274,11 +301,15 @@ export default function ChatWidget() {
         // If an empty streaming placeholder was added, replace it with friendly error
         const next = [...prev]
         const lastIdx = next.length - 1
+        const waNum = getClinicWhatsApp()
+        const fallbackMsg = waNum
+          ? `Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or reach our clinic directly on WhatsApp at ${waNum}.`
+          : 'Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or reach our clinic concierge.'
+
         if (lastIdx >= 0 && next[lastIdx].role === 'model' && !next[lastIdx].content) {
           next[lastIdx] = {
             role: 'model',
-            content:
-              'Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or reach our clinic directly on WhatsApp or call at +91 98200 12345.'
+            content: fallbackMsg
           }
           return next
         }
@@ -286,8 +317,7 @@ export default function ChatWidget() {
           ...prev,
           {
             role: 'model',
-            content:
-              'Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or reach our clinic directly on WhatsApp or call at +91 98200 12345.'
+            content: fallbackMsg
           }
         ]
       })
@@ -462,6 +492,26 @@ export default function ChatWidget() {
                     {slotsLoading ? (
                       <div style={{ fontSize: '0.82rem', color: '#718096', padding: '0.5rem 0' }}>
                         Checking live calendar...
+                      </div>
+                    ) : slotsError ? (
+                      <div style={{ fontSize: '0.82rem', color: '#C53030', padding: '0.5rem 0' }}>
+                        Unable to connect to live calendar right now.{' '}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cur = selectedDate
+                            setSelectedDate('')
+                            setTimeout(() => setSelectedDate(cur), 50)
+                          }}
+                          style={{ textDecoration: 'underline', color: 'var(--color-forest)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+                        >
+                          Retry
+                        </button>
+                        {getClinicWhatsApp() && (
+                          <div style={{ marginTop: '4px' }}>
+                            Or <a href={`https://wa.me/${getClinicWhatsApp().replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'var(--color-forest)' }}>WhatsApp clinic directly</a>.
+                          </div>
+                        )}
                       </div>
                     ) : dynamicSlots.length === 0 ? (
                       <div style={{ fontSize: '0.82rem', color: '#A0AEC0', padding: '0.5rem 0' }}>

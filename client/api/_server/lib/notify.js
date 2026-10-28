@@ -76,6 +76,14 @@ ${manageUrl}
 Warm regards,
 The Skin Tree Team`;
 
+  const waNum = process.env.CLINIC_WHATSAPP;
+  if (!waNum) {
+    console.error('🚨 [CRITICAL CONFIG WARNING] CLINIC_WHATSAPP environment variable is not configured!');
+  }
+  const waHelp = waNum
+    ? `If you need immediate assistance, reach our concierge on WhatsApp at ${waNum}.`
+    : 'If you need immediate assistance, reply to this email or reach our clinic concierge.';
+
   const html = `
 <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #2C1810; max-width: 600px; margin: 0 auto; padding: 24px; background: #FCFAF7; border-radius: 12px; border: 1px solid #E2CEBC;">
   <div style="text-align: center; margin-bottom: 24px;">
@@ -101,7 +109,7 @@ The Skin Tree Team`;
   </div>
 
   <p style="font-size: 13px; color: #9B7462; line-height: 1.5; border-top: 1px solid #E2CEBC; padding-top: 16px;">
-    Please arrive 10 minutes prior to your slot. If you need immediate assistance, reach our concierge on WhatsApp at +91 98765 43210.
+    Please arrive 10 minutes prior to your slot. ${waHelp}
   </p>
 </div>`;
 
