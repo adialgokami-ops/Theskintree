@@ -2,7 +2,6 @@ import React, { useEffect } from 'react'
 import { Routes, Route, Outlet, useLocation } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
-import StickyCTA from './components/StickyCTA'
 import ChatWidget from './components/ChatWidget'
 
 // Pages
@@ -32,7 +31,6 @@ function Layout() {
       <main>
         <Outlet />
       </main>
-      <StickyCTA />
       <ChatWidget />
       <Footer />
     </div>
