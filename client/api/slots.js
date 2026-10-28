@@ -21,6 +21,20 @@ export default async function handler(req, res) {
 
   // Diagnostic route for DB connection & EXPLAIN ANALYZE latency analysis
   if (req.query.diag === '1') {
+    let dbHost = 'none';
+    try {
+      const raw = process.env.WEB_DATABASE_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+      if (raw) {
+        const cleaned = raw.replace(/^postgres(ql)?:\/\/[^@]+@/, 'http://dummy@');
+        const u = new URL(cleaned);
+        dbHost = u.host;
+      }
+    } catch (e) {
+      dbHost = `parse-error: ${e.message}`;
+    }
+
+    const availableDbKeys = Object.keys(process.env).filter(k => /db|database|postgres|supabase/i.test(k));
+
     try {
       const sql = getWebDb();
       const t0 = Date.now();
@@ -37,12 +51,18 @@ export default async function handler(req, res) {
       return res.status(200).json({
         ok: true,
         region: process.env.VERCEL_REGION || 'local',
+        db_host: dbHost,
         select1_ms,
         explain_query_ms,
         plan: explainRows.map((r) => r['QUERY PLAN'])
       });
     } catch (err) {
-      return res.status(500).json({ ok: false, error: err.message });
+      return res.status(500).json({
+        ok: false,
+        error: err.message,
+        db_host: dbHost,
+        available_db_keys: availableDbKeys
+      });
     }
   }
 

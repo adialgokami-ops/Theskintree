@@ -32,7 +32,7 @@ function sanitizeDatabaseUrl(rawUrl) {
 export function getWebDb() {
   if (sql) return sql;
 
-  const rawConnStr = process.env.WEB_DATABASE_URL;
+  const rawConnStr = process.env.WEB_DATABASE_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL;
   if (!rawConnStr) {
     throw new Error('WEB_DATABASE_URL is not configured.');
   }
