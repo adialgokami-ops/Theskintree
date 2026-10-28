@@ -178,7 +178,7 @@ export async function streamChat({ system, messages, signal, onToken, onStatus, 
 
   const secondaryApiKey = process.env.GEMINI_API_KEY_2 || process.env.Gemini_Api_2key || process.env.GEMINI_API_2KEY || null;
   const primaryModel = process.env.CHAT_MODEL || 'gemini-3.1-flash-lite';
-  const fallbackModel = process.env.CHAT_MODEL_FALLBACK || 'gemini-3.5-flash';
+  const fallbackModel = process.env.CHAT_MODEL_FALLBACK || 'gemini-3.1-flash-lite-preview';
 
   const tStart = Date.now();
 
@@ -216,7 +216,7 @@ export async function streamChat({ system, messages, signal, onToken, onStatus, 
       clearTimeout(timeoutId);
       if (signal) signal.removeEventListener('abort', onParentAbort);
 
-      return handleFatalFallback(err, primaryModel, onToken);
+      return handleFatalFallback(err, primaryModel, onToken, null, null, tStart, messages);
     }
   }
 
@@ -367,14 +367,14 @@ export async function streamChat({ system, messages, signal, onToken, onStatus, 
     clearTimeout(raceTimer);
     if (signal) signal.removeEventListener('abort', onParentAbort);
 
-    return handleFatalFallback(finalErr, primaryModel, onToken, primaryError, secondaryError, tStart);
+    return handleFatalFallback(finalErr, primaryModel, onToken, primaryError, secondaryError, tStart, messages);
   }
 }
 
 /**
  * Handle fatal failure and emit friendly concierge fallback message
  */
-function handleFatalFallback(err, primaryModel, onToken, primaryError = null, secondaryError = null, tStart = 0) {
+function handleFatalFallback(err, primaryModel, onToken, primaryError = null, secondaryError = null, tStart = 0, messages = []) {
   let failureReason = 'unknown';
   if (err.name === 'AbortError' || err.message?.includes('aborted')) {
     failureReason = 'timeout';
@@ -399,15 +399,32 @@ function handleFatalFallback(err, primaryModel, onToken, primaryError = null, se
     })
   );
 
-  // Friendly canned message reading CLINIC_WHATSAPP from env
   const waNum = process.env.CLINIC_WHATSAPP;
   if (!waNum) {
     console.error('🚨 [CRITICAL CONFIG WARNING] CLINIC_WHATSAPP environment variable is not configured!');
   }
-  const friendlyFallback = waNum
+
+  // Smart Contextual Fallback: Answer common patient clinic questions directly even if upstream Google API is unavailable
+  const lastUserMsg = (messages.slice().reverse().find(m => m.role === 'user')?.content || '').toLowerCase();
+  let intelligentAnswer = null;
+
+  if (lastUserMsg.includes('time') || lastUserMsg.includes('timing') || lastUserMsg.includes('open') || lastUserMsg.includes('hours') || lastUserMsg.includes('sunday')) {
+    intelligentAnswer = "The Skin Tree is open Monday through Saturday from 09:00 to 16:00 IST (closed on Sundays). Would you like to select an available consultation slot below?";
+  } else if (lastUserMsg.includes('where') || lastUserMsg.includes('location') || lastUserMsg.includes('address') || lastUserMsg.includes('bandra') || lastUserMsg.includes('clinic located')) {
+    intelligentAnswer = "The Skin Tree sanctuary is located in Bandra West, Mumbai (123 Serenity Lane). In-person clinical consultations with Dr. Aishwarya Agarwal are available by advance booking.";
+  } else if (lastUserMsg.includes('doctor') || lastUserMsg.includes('aishwarya') || lastUserMsg.includes('founder') || lastUserMsg.includes('qualification') || lastUserMsg.includes('who')) {
+    intelligentAnswer = "Dr. Aishwarya Agarwal (MBBS, MD Dermatology) is our medical director and founder, with over 15 years of specialised clinical dermatology and aesthetic artistry experience.";
+  } else if (lastUserMsg.includes('treatment') || lastUserMsg.includes('service') || lastUserMsg.includes('acne') || lastUserMsg.includes('glow') || lastUserMsg.includes('peel') || lastUserMsg.includes('facial') || lastUserMsg.includes('laser') || lastUserMsg.includes('scar') || lastUserMsg.includes('wrinkle') || lastUserMsg.includes('pigmentation')) {
+    intelligentAnswer = "Dr. Aishwarya provides evidence-based treatments including Chemical Peels, HydraFacial protocols, Fractional Lasers, Acne/Scar Rejuvenation, and Anti-Ageing therapies. You can book an initial consultation below.";
+  } else if (lastUserMsg.includes('book') || lastUserMsg.includes('slot') || lastUserMsg.includes('appointment') || lastUserMsg.includes('consultation') || lastUserMsg.includes('schedule') || lastUserMsg.includes('tomorrow') || lastUserMsg.includes('today')) {
+    intelligentAnswer = "Dr. Aishwarya's consultation availability is shown below. Please choose your preferred date and time to submit an appointment request.";
+  }
+
+  const responseText = intelligentAnswer || (waNum
     ? `Hello! Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or reach our clinic directly on WhatsApp at ${waNum}.`
-    : 'Hello! Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or contact our clinic concierge.';
-  onToken(friendlyFallback);
+    : 'Hello! Dr. Aishwarya’s booking concierge is experiencing a brief connection delay. Please feel free to select a consultation slot below or contact our clinic concierge.');
+
+  onToken(responseText);
 
   return {
     provider: 'gemini',
