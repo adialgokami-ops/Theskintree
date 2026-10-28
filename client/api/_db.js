@@ -39,6 +39,17 @@ export function getWebDb() {
 
   const connStr = sanitizeDatabaseUrl(rawConnStr);
 
+  try {
+    const dummyUrl = connStr.replace(/^postgres(ql)?:\/\/[^@]+@/, 'http://dummy@');
+    const parsed = new URL(dummyUrl);
+    if (!parsed.hostname || parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+      throw new Error(`Invalid database host (${parsed.hostname || 'missing'}). Please configure WEB_DATABASE_URL in Vercel with your Supabase connection string.`);
+    }
+  } catch (err) {
+    if (err.message.includes('Invalid database host')) throw err;
+    throw new Error('Malformed database URL in WEB_DATABASE_URL. Please verify the connection string in Vercel.');
+  }
+
   sql = postgres(connStr, {
     max: 1,
     prepare: false,
