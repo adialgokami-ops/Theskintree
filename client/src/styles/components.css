@@ -619,8 +619,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #25D366;
-  box-shadow: 0 0 0 2px rgba(37, 211, 102, 0.25);
+  background: #7A9A7E;
+  box-shadow: 0 0 0 2px rgba(122, 154, 126, 0.3);
   display: inline-block;
 }
 
@@ -698,7 +698,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #25D366;
+  background: #7A9A7E;
   display: inline-block;
 }
 

@@ -44,7 +44,7 @@ export default function ChatWidget() {
     {
       role: 'model',
       content:
-        'Hello! Share your skin concern with us, and we will help you book a consultation slot with Dr. Aishwarya for a personalized treatment plan.'
+        'Hello! I am your AI concierge. Share your skin questions or goals with me, and I can guide you through our clinical protocols or help you reserve a consultation with Dr. Aishwarya. (Note: I provide clinical information, not medical diagnosis.)'
     }
   ])
 
@@ -379,7 +379,7 @@ export default function ChatWidget() {
             </svg>
           )}
         </span>
-        <span className="chat-toggle-label">Dr. Aishwarya Team</span>
+        <span className="chat-toggle-label">AI Concierge</span>
         <span className="chat-online-pulse" />
       </button>
 
@@ -391,9 +391,9 @@ export default function ChatWidget() {
             <div className="chat-header-info">
               <div className="chat-avatar">🌿</div>
               <div>
-                <h3 className="chat-title">Dr. Aishwarya Team</h3>
+                <h3 className="chat-title">The Skin Tree Concierge</h3>
                 <p className="chat-subtitle">
-                  <span className="chat-status-dot" /> The Skin Tree Concierge
+                  <span className="chat-status-dot" /> AI Assistant · Non-Diagnostic
                 </p>
               </div>
             </div>
